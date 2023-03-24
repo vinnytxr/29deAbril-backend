@@ -1,4 +1,4 @@
-#!/home/alessandro/Alens/Django/env/bin/python3.10
+#!/home/alunos/a1903934/Documentos/portal-aulas-online-backend/portal-aulas-api/env/bin/python3.10
 # -*- coding: utf-8 -*-
 import re
 import sys
