@@ -1,0 +1,8 @@
+django>=4.0.0,<4.1.0
+djangorestframework
+pyyaml
+requests
+django-cors-headers
+django-filter
+markdown
+gunicorn==20.1.0

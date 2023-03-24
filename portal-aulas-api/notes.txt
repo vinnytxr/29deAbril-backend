@@ -1,0 +1,41 @@
+https://www.youtube.com/watch?v=d2LZdEHsteI&list=PLsTx8TSx2fHY01FnuxBdwiBiOdZdPGik7&index=10
+https://adamtheautomator.com/django-docker/
+https://testdriven.io/blog/django-fly/
+https://fly.io/blog/deploying-django-to-production/
+
+python3.10 -m venv env
+source env/bin/activate
+deactivate
+
+pip install --upgrade pip
+
+pip install -r requirements.txt
+
+django-admin startproject api .
+django-admin startapp usuarios
+
+python manage.py makemigrations
+
+python manage.py migrate
+
+pip install ipython
+python manage.py shell
+
+```
+from usuarios.models import Todo
+todo = Todo()
+todo.name = 'Acordar cedo'
+todo.__dict__
+```
+```
+from usuarios.models import Todo
+from usuarios.serializers import TodoSerializer
+todo = Todo.objects.first()
+serializer - TodoSerializer(todo)
+serializer.data
+```
+
+sudo docker-compose run api sh -c "python manage.py makemigrations"
+sudo docker-compose run api sh -c "python manage.py migrate"
+sudo docker-compose build
+sudo docker-compose up
