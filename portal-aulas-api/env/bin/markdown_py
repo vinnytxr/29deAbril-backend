@@ -1,4 +1,6 @@
-#!/home/alessandro/Alens/Django/env/bin/python3.10
+#!/bin/sh
+'''exec' "/home/renangas/Documents/GitHub projects/portal-aulas-online-backend/portal-aulas-api/env/bin/python3.9" "$0" "$@"
+' '''
 # -*- coding: utf-8 -*-
 import re
 import sys
