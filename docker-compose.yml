@@ -1,0 +1,25 @@
+version: "3"
+
+services:
+  api:
+    build:
+      context: ./portal-aulas-api
+      dockerfile: development.dockerfile
+    image: portal-aula-api:1.0
+    container_name: "portal-aulas-api"
+    volumes:
+      - ./portal-aulas-api:/app
+    ports:
+      - "8080:8080"
+    depends_on:
+      - database
+
+  database:
+    build:
+      context: .
+      dockerfile: dev-database.dockerfile
+    image: portal-aula-database
+    container_name: portal-aula-database
+    ports:
+      - "5432:5432"
+    

@@ -6,3 +6,4 @@ django-cors-headers
 django-filter
 markdown
 gunicorn==20.1.0
+django-environ==0.9.0
