@@ -1,7 +1,46 @@
-version: "3"
+# version: "3"
+
+# services:
+#   api:
+#     build:
+#       context: ./portal-aulas-api
+#       dockerfile: development.dockerfile
+#     image: portal-aula-api:1.0
+#     container_name: "portal-aulas-api"
+#     volumes:
+#       - ./portal-aulas-api:/app
+#     ports:
+#       - "8080:8080"
+#     env_file:
+#       - ./.env.dev
+#     depends_on:
+#       - database
+
+#   database:
+#     build:
+#       context: .
+#       dockerfile: dev-database.dockerfile
+#     image: portal-aula-database
+#     container_name: portal-aula-database
+#     environment:
+#       - "POSTGRES_HOST_AUTH_METHOD=trust"
+#     ports:
+#       - "5432:5432"
+    
+version: "3.9"
 
 services:
-  api:
+  # web:
+  #   build: ./portal-aulas-api
+  #   command: python /code/manage.py runserver 0.0.0.0:8000
+  #   volumes:
+  #     - ./portal-aulas-api:/code
+  #   ports:
+  #     - 8000:8000
+  #   depends_on:
+  #     - db
+
+  web:
     build:
       context: ./portal-aulas-api
       dockerfile: development.dockerfile
@@ -11,15 +50,27 @@ services:
       - ./portal-aulas-api:/app
     ports:
       - "8080:8080"
+    env_file:
+      - ./.env
     depends_on:
-      - database
+      - db
+    command: sh -c "python /app/manage.py migrate && python /app/manage.py runserver 0.0.0.0:8080"
 
-  database:
+  db:
     build:
       context: .
-      dockerfile: dev-database.dockerfile
+      dockerfile: ./dev-database.dockerfile
     image: portal-aula-database
     container_name: portal-aula-database
+    # volumes:
+    #   - postgres_data:/var/lib/postgresql/data/
+    environment:
+      - "POSTGRES_HOST_AUTH_METHOD=trust"
+      - POSTGRES_USER=root
+      - POSTGRES_PASSWORD=root
+      - POSTGRES_DB=root
     ports:
       - "5432:5432"
-    
+
+# volumes:
+#   postgres_data:
