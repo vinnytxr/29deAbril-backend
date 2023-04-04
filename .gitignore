@@ -136,3 +136,8 @@ GitHub.sublime-settings
 !.vscode/extensions.json 
 .history
 dev.txt
+dev.sql
+
+# Databases local sources
+postgres_data
+postgres-data
