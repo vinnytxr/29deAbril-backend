@@ -1,15 +1,24 @@
-# fly.toml file generated for portal-aulas-api on 2023-03-24T12:12:09-03:00
+# fly.toml file generated for portal-aulas-api on 2023-04-03T23:40:07-03:00
 
 app = "portal-aulas-api"
 kill_signal = "SIGINT"
 kill_timeout = 5
 processes = []
 
+[deploy]
+  release_command = "python manage.py migrate"
+
 [env]
   PORT = "8080"
+  SQL_ENGINE = "django.db.backends.postgresql"
+  SQL_DATABASE = "postgres"
+  SQL_USER = "postgres"
+  SQL_PASSWORD = "sjBrPulEjnGxPcB"
+  SQL_HOST = "alens-pg-database.fly.dev"
+  SQL_PORT = "5432"
+  DATABASE = "postgres"
 
 [experimental]
-  allowed_public_ports = []
   auto_rollback = true
 
 [[services]]
@@ -37,3 +46,7 @@ processes = []
     interval = "15s"
     restart_limit = 0
     timeout = "2s"
+
+[[statics]]
+  guest_path = "/app/public"
+  url_prefix = "/static/"

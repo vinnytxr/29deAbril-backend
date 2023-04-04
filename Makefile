@@ -1,7 +1,11 @@
 build:
+	docker-compose down
+	docker-compose rm
 	docker-compose build --no-cache
 
-all:
-	docker-compose exec web python manage.py migrate
-	docker-compose up --build db
+start:
+	cp .env.dev .env
+	docker-compose down
+	docker-compose up -d db
 	docker-compose up web
+

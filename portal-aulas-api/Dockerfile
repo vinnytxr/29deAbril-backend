@@ -17,43 +17,43 @@
 # pull official base image
 
 
-# FROM python:3.10-alpine
+FROM python:3.10-alpine
 
-# ENV PYTHONDONTWRITEBYTECODE 1
-# ENV PYTHONUNBUFFERED 1
-
-# RUN mkdir -p /app
-# WORKDIR /app
-
-# # install dependencies
-# COPY requirements.txt /tmp/requirements.txt
-# RUN set -ex && \
-#     pip install --upgrade pip && \
-#     pip install -r /tmp/requirements.txt && \
-#     rm -rf /root/.cache/
-
-# COPY . /app/
-# RUN python manage.py makemigrations
-# RUN python manage.py migrate
-
-# EXPOSE 8000
-# CMD ["python", "manage.py", "runserver", "0.0.0.0:8080"]
-
-# Pull base image
-
-FROM python:3.10.2-slim-bullseye
-
-# Set environment variables
-ENV PIP_DISABLE_PIP_VERSION_CHECK 1
 ENV PYTHONDONTWRITEBYTECODE 1
 ENV PYTHONUNBUFFERED 1
 
-# Set work directory
-WORKDIR /code
+RUN mkdir -p /app
+WORKDIR /app
 
-# Install dependencies
-COPY ./requirements.txt .
-RUN pip install -r requirements.txt
+# install dependencies
+COPY requirements.txt /tmp/requirements.txt
+RUN set -ex && \
+    pip install --upgrade pip && \
+    pip install -r /tmp/requirements.txt && \
+    rm -rf /root/.cache/
 
-# Copy project
-COPY . .
+COPY . /app/
+RUN python manage.py makemigrations
+# RUN python manage.py migrate
+
+EXPOSE 8080
+CMD ["python", "manage.py", "runserver", "0.0.0.0:8080"]
+
+# Pull base image
+
+# FROM python:3.10.2-slim-bullseye
+
+# # Set environment variables
+# ENV PIP_DISABLE_PIP_VERSION_CHECK 1
+# ENV PYTHONDONTWRITEBYTECODE 1
+# ENV PYTHONUNBUFFERED 1
+
+# # Set work directory
+# WORKDIR /code
+
+# # Install dependencies
+# COPY ./requirements.txt .
+# RUN pip install -r requirements.txt
+
+# # Copy project
+# COPY . .
