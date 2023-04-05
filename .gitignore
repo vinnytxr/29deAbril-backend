@@ -142,4 +142,4 @@ dev.sql
 # Databases local sources
 postgres_data/*
 postgres-data/*
-.db
+.db.txt

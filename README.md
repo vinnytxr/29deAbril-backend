@@ -23,6 +23,15 @@ SQL_PORT=5432
 - `make db` irá instanciar e startar apenas o container para o database
 - `make build` irá apenas construir as imagens de docker para a api e database
 
+### Credênciais Servidor de Produção
+##### Database (PostgreSQL):
+`postgres://postgres:sjBrPulEjnGxPcB@alens-pg-database.fly.dev:5432/postgres`
+<br/>
+`jdbc:postgresql://alens-pg-database.fly.dev:5432/postgres`
+##### API: 
+`https://portal-aulas-api.fly.dev/`
+
+
 ### Outros Links
 #### [Modelo Banco de Dandos](https://dbdiagram.io/d/642a4d435758ac5f17262b1e)
 #### [Repositŕio Frontend](https://github.com/349Team/portal-aulas-online-frontend)
