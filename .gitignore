@@ -140,6 +140,6 @@ dev.txt
 dev.sql
 
 # Databases local sources
-postgres_data
-postgres-data
+postgres_data/*
+# postgres-data/*
 .db
