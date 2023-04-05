@@ -98,6 +98,7 @@ celerybeat-schedule.*
 
 # Environments 
 .env 
+.env.prod
 .venv 
 env/ 
 venv/ 
@@ -136,3 +137,9 @@ GitHub.sublime-settings
 !.vscode/extensions.json 
 .history
 dev.txt
+dev.sql
+
+# Databases local sources
+postgres_data/*
+postgres-data/*
+.db.txt
