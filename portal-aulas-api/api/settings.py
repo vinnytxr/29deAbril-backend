@@ -42,6 +42,8 @@ INSTALLED_APPS = [
     # libs
     'rest_framework',
     # apps
+    'core',
+    'users',
 ]
 
 MIDDLEWARE = [
