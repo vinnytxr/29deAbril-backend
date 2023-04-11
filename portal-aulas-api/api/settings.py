@@ -41,9 +41,9 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     # libs
     'rest_framework',
+    'django_extensions',
     # apps
-    'core',
-    'users',
+    'user',
 ]
 
 MIDDLEWARE = [
@@ -155,3 +155,7 @@ REST_FRAMEWORK = {
     'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.PageNumberPagination',
     'PAGE_SIZE': 5
 }
+
+AUTH_USER_MODEL = "user.User"
+CORS_ORIGIN_ALLOW_ALL = True
+CORS_ALLOW_CREDENTIALS = True
