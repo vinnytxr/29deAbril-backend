@@ -159,3 +159,8 @@ REST_FRAMEWORK = {
 AUTH_USER_MODEL = "user.User"
 CORS_ORIGIN_ALLOW_ALL = True
 CORS_ALLOW_CREDENTIALS = True
+
+AUTHENTICATION_BACKENDS = ['django.contrib.auth.backends.ModelBackend',]
+PASSWORD_HASHERS = [
+   'django.contrib.auth.hashers.BCryptSHA256PasswordHasher',  # or any other hashing algorithm you want to use
+]
