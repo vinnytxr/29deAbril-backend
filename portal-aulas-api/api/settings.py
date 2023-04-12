@@ -46,9 +46,10 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     # libs
     'rest_framework',
+    'django_extensions',
     # apps
-    'users',
     'courses',
+    'user',
 ]
 
 MIDDLEWARE = [
@@ -163,3 +164,12 @@ REST_FRAMEWORK = {
         'rest_framework.renderers.JSONRenderer',
     ],
 }
+
+AUTH_USER_MODEL = "user.User"
+CORS_ORIGIN_ALLOW_ALL = True
+CORS_ALLOW_CREDENTIALS = True
+
+PASSWORD_HASHERS = [
+    "django.contrib.auth.hashers.BCryptSHA256PasswordHasher",]
+
+AUTH_PASSWORD_HASHERS = ['django.contrib.auth.hashers.BCryptSHA256PasswordHasher',]
