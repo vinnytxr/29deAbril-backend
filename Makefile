@@ -15,6 +15,7 @@ start:
 # restaura todo o ambiente dev (todos os dados são apagados inclusive do banco e o ambiente todo é reconstruido)
 resolve:
 	sudo rm -rf ./postgres-data
+	sudo rm -rf ./portal-aulas-api/media/*
 	mkdir ./postgres-data
 	docker rm -f portal-aulas-api
 	docker rm -f portal-aulas-database
