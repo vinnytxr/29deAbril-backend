@@ -17,6 +17,8 @@ class UserSerializer(serializers.ModelSerializer):
     def create(self, validated_data):
         password = validated_data.pop('password')
         role_ids = validated_data.pop('role')
+        if not role_ids:
+            raise serializers.ValidationError({'Cargo': 'Usuário precisa ter um cargo.'})
         user = User.objects.create_user(password=password, **validated_data)
         user.role.set(role_ids)
         return user
