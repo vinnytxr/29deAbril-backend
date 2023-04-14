@@ -24,6 +24,7 @@ APPEND_SLASH = False
 
 # SECURITY WARNING: keep the secret key used in production secret!
 SECRET_KEY = 'django-insecure-_b0w-$0ak_rt2cln)s#)g5^_z%k_cnvn-d+2)u+^xxr#dn++z!'
+JWT_SECRET = "dapibusnecdignissimegetrciDuisaccumsanmiacarcu"
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
@@ -162,7 +163,7 @@ REST_FRAMEWORK = {
     'PAGE_SIZE': 5, 
     'DEFAULT_RENDERER_CLASSES': [
         'rest_framework.renderers.JSONRenderer',
-    ],
+    ]
 }
 
 AUTH_USER_MODEL = "user.User"
