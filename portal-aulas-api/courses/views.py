@@ -2,10 +2,18 @@ from rest_framework import viewsets, status
 from rest_framework.response import Response
 from rest_framework.exceptions import NotFound
 from .models import Course, Learning
-from .serializers import CourseSerializer, LearningSerializer
+from .serializers.course import CourseSerializerForPOSTS, CourseSerializerForGETS
+from .serializers.learning import LearningSerializer
 class CourseViewSet(viewsets.ModelViewSet):
     queryset = Course.objects.all()
-    serializer_class = CourseSerializer
+    # serializer_class = CourseSerializer
+
+    def get_serializer_class(self):
+        # Return a different serializer for the create endpoint
+        if self.action in ['create', 'update', 'partial_update']:
+            return CourseSerializerForPOSTS
+        else:
+            return CourseSerializerForGETS
 
     # def get_object(self, pk):
     #     try:
@@ -48,8 +56,11 @@ class CourseViewSet(viewsets.ModelViewSet):
     # [CREATE]
     # body: multipart/form-data
     def create(self, request, *args, **kwargs):
+        print("create")
+        print(request.data)
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
+        # print(serializer.data)
         serializer.save()
 
         headers = self.get_success_headers(serializer.data)
@@ -74,22 +85,10 @@ class CourseViewSet(viewsets.ModelViewSet):
 
         return Response(serializer.data)
     
-    # def patch(self, request):
-    #     print("partial")
-    #     instance = self.get_object()
-    #     serializer = self.get_serializer(instance, data=request.data, partial=True)
-    #     serializer.is_valid(raise_exception=True)
-
-    #     # Verifica se há uma nova imagem na requisição
-    #     if 'banner' in request.FILES:
-    #         # Exclui a imagem antiga
-    #         instance.banner.delete(save=False)
-    #         # Salva a nova imagem
-    #         instance.banner = request.FILES['banner']
-
-    #     self.perform_update(serializer)
-
-    #     return Response(serializer.data)
+    # [PATCH] /<id> 
+    # body: multipart/form-data
+    def partial_update(self, request, *args, **kwargs):
+        return self.update(request, *args, **kwargs)
 
     # [DELETE] /<id>
     def destroy(self, request, *args, **kwargs):

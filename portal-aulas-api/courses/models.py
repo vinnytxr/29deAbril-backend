@@ -14,7 +14,7 @@ class Course(models.Model):
     title = models.CharField(max_length=64, blank=False)
     description = models.CharField(max_length=265, blank=False)
     banner = models.FileField(upload_to=get_file_path)
-    # professor = models.ForeignKey(User, on_delete=models.CASCADE, related_name='courses', null=False, blank=False)
+    professor = models.ForeignKey(User, on_delete=models.CASCADE, null=False, blank=False)
 
     def __str__(self):
         return self.title 
