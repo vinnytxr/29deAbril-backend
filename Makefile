@@ -32,3 +32,6 @@ api:
 db:
 	docker-compose up db
 
+makemigrate:
+	docker exec -it portal-aulas-api sh -c "python /app/manage.py makemigrations && python /app/manage.py migrate"
+

@@ -1,17 +1,82 @@
 from rest_framework import viewsets, status
 from rest_framework.response import Response
+from rest_framework import status
 from .models import Course, Learning
-from .serializers import CourseSerializer, LearningSerializer
+from .serializers.course import CourseSerializerForPOSTS, CourseSerializerForGETS
+from .serializers.learning import LearningSerializer
+from user.models import User, ROLES
 
 class CourseViewSet(viewsets.ModelViewSet):
     queryset = Course.objects.all()
-    serializer_class = CourseSerializer
+
+    # Sobreescrita para utilizar Serializadores diferêntes dependêndo do endpoint
+    def get_serializer_class(self):
+        if self.action in ['create', 'update', 'partial_update']:
+            return CourseSerializerForPOSTS
+        else:
+            return CourseSerializerForGETS
+
+    # [GET] /<id>
+    def retrieve(self, request, *args, **kwargs):
+        instance = self.get_object()
+        serializer = self.get_serializer(instance)
+        return Response(serializer.data)
+    
+    # [GET] /?page={int}&size={int}&professor={int}
+    def list(self, request, *args, **kwargs):
+        # /courses/?page=1&size=3
+        queryset = self.filter_queryset(self.get_queryset())
+
+        # Verifica se o parâmetro "professor" existe na query string
+        professor_id = request.query_params.get('professor')
+        if professor_id:
+            if not professor_id.isdigit():
+                return Response({'professor': 'This query param must be a integer primary key'}, status=status.HTTP_400_BAD_REQUEST)
+            # Filtra o queryset para retornar apenas os cursos associados ao professor com o id passado
+            queryset = queryset.filter(professor__id=professor_id)
+
+        # Verifica se o parâmetro "page" existe na query string
+        page_number = request.query_params.get('page')
+        if page_number is None:
+            # Define o tamanho da página como o total de objetos no queryset
+            page_size = queryset.count()
+        else:
+            # Obtém o tamanho da página da query string ou usa o padrão
+            page_size = request.query_params.get('size', queryset.count())
+
+        # Define o tamanho da página para a paginação
+        self.paginator.page_size = page_size
+        page = self.paginate_queryset(queryset)
+
+        if page is not None:
+            serializer = self.get_serializer(page, many=True)
+            return self.get_paginated_response(serializer.data)
+
+        serializer = self.get_serializer(queryset, many=True)
+        return Response(serializer.data)
 
     # [CREATE]
     # body: multipart/form-data
     def create(self, request, *args, **kwargs):
+        professor_id = self.request.data.get('professor')
+
+        if not professor_id or not professor_id.isdigit():
+            return Response(
+                {'professor': ['This field is required as a integer primary key']},
+                status=status.HTTP_403_FORBIDDEN
+            )
+
+        professor = User.objects.get(id=professor_id)
+
+        if not professor.role.filter(id=ROLES.PROFESSOR.value).exists():
+            return Response(
+                {'professor': ['This user does not have permission to perform Professor\'s operations.']},
+                status=status.HTTP_403_FORBIDDEN
+            )
+        
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
+
         serializer.save()
 
         headers = self.get_success_headers(serializer.data)
@@ -20,9 +85,8 @@ class CourseViewSet(viewsets.ModelViewSet):
     # [UPDATE] /<id> 
     # body: multipart/form-data
     def update(self, request, *args, **kwargs):
-        print("update")
         instance = self.get_object()
-        serializer = self.get_serializer(instance, data=request.data)
+        serializer = self.get_serializer(instance, data=request.data, partial=True)
         serializer.is_valid(raise_exception=True)
 
         # Verifica se há uma nova imagem na requisição
@@ -35,10 +99,14 @@ class CourseViewSet(viewsets.ModelViewSet):
         self.perform_update(serializer)
 
         return Response(serializer.data)
+    
+    # [PATCH] /<id> 
+    # body: multipart/form-data
+    def partial_update(self, request, *args, **kwargs):
+        return self.update(request, *args, **kwargs)
 
     # [DELETE] /<id>
     def destroy(self, request, *args, **kwargs):
-        print("destroy")
         instance = self.get_object()
         instance.banner.delete(save=False) 
         self.perform_destroy(instance)

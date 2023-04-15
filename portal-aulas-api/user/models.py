@@ -1,9 +1,18 @@
 from django.db import models
 from django.contrib.auth import models as auth_models
+from enum import Enum
 
 from django_extensions.db.models import (
     TimeStampedModel 
 )
+
+# Enum com as roles padrões
+# Apenas um enum utilizado como constante no projeto
+# Não possui qualquer efeito no database ou no model
+class ROLES(Enum):
+    STUDENT = 1
+    PROFESSOR = 2
+    ADMIN = 3
 
 
 class Role(models.Model):
