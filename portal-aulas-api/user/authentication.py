@@ -1,6 +1,5 @@
 from django.conf import settings
 from rest_framework import authentication, exceptions, status
-from rest_framework.response import Response
 import jwt
 
 from . import models
@@ -16,7 +15,7 @@ class CustomUserAuthentication(authentication.BaseAuthentication):
         try:
             payload = jwt.decode(token, settings.JWT_SECRET, algorithms=["HS256"])
         except:
-            return Response({"message": "User not authenticated"}, status=status.HTTP_401_UNAUTHORIZED)
+            raise exceptions.AuthenticationFailed({"message": "User not authenticated"})
 
         user = models.User.objects.filter(id=payload["id"]).first()
 
