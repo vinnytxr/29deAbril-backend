@@ -1,8 +1,8 @@
 from user.models import User, Role
 from user.serializers import UserSerializer, RoleSerializer
-from rest_framework import viewsets, views, exceptions, permissions, status
+from rest_framework import viewsets, views, exceptions, status
 from rest_framework.response import Response
-from . import services, authentication
+from . import services, authentication, permissions
 
 
 class RoleViewSet(viewsets.ModelViewSet):
@@ -36,7 +36,7 @@ class LoginAPIView(views.APIView):
 
 class UserAPIView(views.APIView):
   authentication_classes = (authentication.CustomUserAuthentication,)
-  permission_classes = (permissions.IsAuthenticated,)
+  permission_classes = (permissions.CustomIsAuthenticated,)
 
   def get(self, request):
     user = request.user
@@ -47,7 +47,7 @@ class UserAPIView(views.APIView):
 
 class LogoutAPIView(views.APIView):
   authentication_classes = (authentication.CustomUserAuthentication,)
-  permission_classes = (permissions.IsAuthenticated,)
+  permission_classes = (permissions.CustomIsAuthenticated,)
 
   def post(self, request):
     resp = Response({"message": "User logout"})
