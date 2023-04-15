@@ -49,8 +49,9 @@ INSTALLED_APPS = [
     'rest_framework',
     'django_extensions',
     # apps
-    'courses',
     'user',
+    'courses',
+    'lessons'
 ]
 
 MIDDLEWARE = [
