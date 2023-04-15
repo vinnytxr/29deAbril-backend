@@ -30,8 +30,6 @@ DEBUG = True
 
 ALLOWED_HOSTS = ['*']
 
-# http://localhost:3000
-
 IMAGES_BASE_URL = "{}/media/images".format(BASE_DIR)
 
 MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
