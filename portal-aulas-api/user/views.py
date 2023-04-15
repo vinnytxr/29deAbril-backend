@@ -1,6 +1,7 @@
 from user.models import User, Role
 from user.serializers import UserSerializer, RoleSerializer
-from rest_framework import viewsets, views, response, exceptions, permissions
+from rest_framework import viewsets, views, exceptions, permissions, status
+from rest_framework.response import Response
 from . import services, authentication
 
 
@@ -20,14 +21,14 @@ class LoginAPIView(views.APIView):
     user = services.fetch_user_by_email(email=email)
 
     if user is None:
-      raise exceptions.AuthenticationFailed("Invalid credentials.")
+      return Response({'message': 'Invalid credentials'}, status=status.HTTP_400_BAD_REQUEST)
 
     if not user.check_password(raw_password=password):
-      raise exceptions.AuthenticationFailed("Invalid credentials.")
+      return Response({'message': 'Invalid credentials'}, status=status.HTTP_400_BAD_REQUEST)
 
     token = services.create_token(user_id=user.id)
 
-    resp = response.Response()
+    resp = Response(status=status.HTTP_200_OK)
 
     resp.set_cookie(key="jwt", value=token, httponly=True)
 
@@ -42,15 +43,14 @@ class UserAPIView(views.APIView):
 
     serializer = UserSerializer(user)
 
-    return response.Response(serializer.data)
+    return Response(serializer.data)
 
 class LogoutAPIView(views.APIView):
   authentication_classes = (authentication.CustomUserAuthentication,)
   permission_classes = (permissions.IsAuthenticated,)
 
   def post(self, request):
-    resp = response.Response()
+    resp = Response({"message": "User logout"})
     resp.delete_cookie("jwt")
-    resp.data = {"message": "User logout."}
 
     return resp
