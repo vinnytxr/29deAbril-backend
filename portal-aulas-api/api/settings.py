@@ -29,6 +29,8 @@ SECRET_KEY = 'django-insecure-_b0w-$0ak_rt2cln)s#)g5^_z%k_cnvn-d+2)u+^xxr#dn++z!
 DEBUG = True
 
 ALLOWED_HOSTS = ['*']
+CORS_ALLOW_ALL_ORIGINS = True
+CORS_ALLOW_CREDENTIALS = True
 
 IMAGES_BASE_URL = "{}/media/images".format(BASE_DIR)
 
