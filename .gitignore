@@ -145,3 +145,4 @@ postgres-data
 postgres_data/*
 postgres-data/*
 .db.txt
+Makefile

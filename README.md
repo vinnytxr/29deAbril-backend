@@ -34,4 +34,4 @@ SQL_PORT=5432
 
 ### Outros Links
 #### [Modelo Banco de Dandos](https://dbdiagram.io/d/642a4d435758ac5f17262b1e)
-#### [Repositŕio Frontend](https://github.com/349Team/portal-aulas-online-frontend)
+#### [Repositório Frontend](https://github.com/349Team/portal-aulas-online-frontend)

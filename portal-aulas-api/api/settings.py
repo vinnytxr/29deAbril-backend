@@ -30,6 +30,8 @@ JWT_SECRET = "dapibusnecdignissimegetrciDuisaccumsanmiacarcu"
 DEBUG = True
 
 ALLOWED_HOSTS = ['*']
+CORS_ALLOW_ALL_ORIGINS = True
+CORS_ALLOW_CREDENTIALS = True
 
 IMAGES_BASE_URL = "{}/media/images".format(BASE_DIR)
 
@@ -50,8 +52,9 @@ INSTALLED_APPS = [
     'rest_framework',
     'django_extensions',
     # apps
-    'courses',
     'user',
+    'courses',
+    'lessons'
 ]
 
 MIDDLEWARE = [
