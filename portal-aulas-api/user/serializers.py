@@ -1,5 +1,6 @@
-from user.models import User, Role
+from user.models import User, Role, Invitation
 from rest_framework import serializers
+from . import services
 
 class RoleSerializer(serializers.ModelSerializer):
     class Meta:
@@ -22,3 +23,17 @@ class UserSerializer(serializers.ModelSerializer):
         user = User.objects.create_user(password=password, **validated_data)
         user.role.set(role_ids)
         return user
+
+class InvitationSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Invitation
+        fields = ['id', 'code']
+
+    def create(self, validated_data):
+        code = validated_data.pop('code')
+
+        code = services.create_invitation()
+
+        invitation = Invitation.objects.create(code=code, **validated_data)
+
+        return invitation
