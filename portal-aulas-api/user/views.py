@@ -1,8 +1,9 @@
-from user.models import User, Role
-from user.serializers import UserSerializer, RoleSerializer
+from user.models import User, Role, Invitation
+from user.serializers import UserSerializer, RoleSerializer, InvitationSerializer
 from rest_framework import viewsets, views, exceptions, status
 from rest_framework.response import Response
 from . import services, authentication, permissions
+from rest_framework import mixins
 
 
 class RoleViewSet(viewsets.ModelViewSet):
@@ -12,6 +13,26 @@ class RoleViewSet(viewsets.ModelViewSet):
 class UserViewSet(viewsets.ModelViewSet):
   queryset = User.objects.all()
   serializer_class = UserSerializer
+
+class InvitationViewSet(mixins.CreateModelMixin, mixins.ListModelMixin, 
+                                mixins.UpdateModelMixin, mixins.DestroyModelMixin,
+                                viewsets.GenericViewSet):
+  serializer_class = InvitationSerializer
+  queryset = Invitation.objects.all()
+                        
+  def list(self, request):
+    invitations = Invitation.objects.all()
+    serializer = InvitationSerializer(invitations, many=True)
+
+    return Response(serializer.data)
+
+  def create(self, request):
+    serializer = InvitationSerializer(data=request.data)
+    
+    if serializer.is_valid():
+      serializer.save()
+      return Response(serializer.data, status=status.HTTP_201_CREATED)
+    return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 class LoginAPIView(views.APIView):
   def post(self, request):
