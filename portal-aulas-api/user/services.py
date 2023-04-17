@@ -19,3 +19,12 @@ def create_token(user_id: int)->str:
     token=jwt.encode(payload, settings.JWT_SECRET, algorithm="HS256")
 
     return token
+
+def create_invitation()->str:
+    payload = {
+        "creation_date":datetime.datetime.now(tz=timezone.get_current_timezone()).strftime("%m/%d/%Y %H:%M:%S")
+    }
+
+    code=jwt.encode(payload, settings.JWT_SECRET, algorithm="HS256")
+
+    return code
