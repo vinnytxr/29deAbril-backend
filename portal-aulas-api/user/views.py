@@ -3,6 +3,7 @@ from user.serializers import UserSerializer, RoleSerializer, InvitationSerialize
 from rest_framework import viewsets, views, exceptions, status
 from rest_framework.response import Response
 from . import services, authentication, permissions
+from user.permissions import CustomIsAdmin
 from rest_framework import mixins
 
 
@@ -19,6 +20,8 @@ class InvitationViewSet(mixins.CreateModelMixin, mixins.ListModelMixin,
                                 viewsets.GenericViewSet):
   serializer_class = InvitationSerializer
   queryset = Invitation.objects.all()
+  authentication_classes = (authentication.CustomUserAuthentication,)
+  permission_classes = (permissions.CustomIsAdmin,)
                         
   def list(self, request):
     invitations = Invitation.objects.all()
@@ -33,6 +36,22 @@ class InvitationViewSet(mixins.CreateModelMixin, mixins.ListModelMixin,
       serializer.save()
       return Response(serializer.data, status=status.HTTP_201_CREATED)
     return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+  
+  def update(self, request):
+      professor = request.data.pop('professor')
+      instance = self.get_object()
+      serializer = self.get_serializer(instance, data=request.data, professor=professor)
+      serializer.is_valid(raise_exception=True)
+      serializer.save()
+
+      if getattr(instance, '_prefetched_objects_cache', None):
+          # If 'prefetch_related' has been applied to a queryset, we need to
+          # forcibly invalidate the prefetch cache on the instance.
+          instance._prefetched_objects_cache = {}
+
+      return Response(serializer.data)
+        
 
 class LoginAPIView(views.APIView):
   def post(self, request):
