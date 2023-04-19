@@ -25,15 +25,16 @@ class UserSerializer(serializers.ModelSerializer):
         return user
 
 class InvitationSerializer(serializers.ModelSerializer):
+
+    professor = serializers.PrimaryKeyRelatedField(queryset=User.objects.all(), allow_null=True)
+
     class Meta:
         model = Invitation
-        fields = ['id', 'code']
+        fields = ['id', 'code', 'professor']
 
     def create(self, validated_data):
         code = validated_data.pop('code')
-
         code = services.create_invitation()
 
         invitation = Invitation.objects.create(code=code, **validated_data)
-
         return invitation
