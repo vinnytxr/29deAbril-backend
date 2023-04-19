@@ -10,6 +10,11 @@ def fetch_user_by_email(email: str)->"User":
 
     return user
 
+def fetch_invitation_by_code(code: str)->"Invitation":
+    invitation = models.Invitation.objects.filter(code=code).first()
+
+    return invitation.id
+
 def create_token(user_id: int)->str:
     payload = {
         "id":user_id,
