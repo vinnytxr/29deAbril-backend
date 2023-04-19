@@ -3,8 +3,10 @@ from user.serializers import UserSerializer, RoleSerializer, InvitationSerialize
 from rest_framework import viewsets, views, exceptions, status
 from rest_framework.response import Response
 from . import services, authentication, permissions
-from user.permissions import CustomIsAdmin
+from user.permissions import CustomIsAdmin, CustomIsProfessor
+from rest_framework.permissions import AllowAny
 from rest_framework import mixins
+from . import services
 
 
 class RoleViewSet(viewsets.ModelViewSet):
@@ -21,7 +23,11 @@ class InvitationViewSet(mixins.CreateModelMixin, mixins.ListModelMixin,
   serializer_class = InvitationSerializer
   queryset = Invitation.objects.all()
   authentication_classes = (authentication.CustomUserAuthentication,)
-  permission_classes = (permissions.CustomIsAdmin,)
+  
+  def get_permissions(self):
+    if self.action == 'update':
+        return [CustomIsProfessor()]
+    return [CustomIsAdmin()]
                         
   def list(self, request):
     invitations = Invitation.objects.all()
@@ -37,20 +43,46 @@ class InvitationViewSet(mixins.CreateModelMixin, mixins.ListModelMixin,
       return Response(serializer.data, status=status.HTTP_201_CREATED)
     return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
-  
-  def update(self, request):
-      professor = request.data.pop('professor')
-      instance = self.get_object()
-      serializer = self.get_serializer(instance, data=request.data, professor=professor)
-      serializer.is_valid(raise_exception=True)
-      serializer.save()
+  def get_object(self):
+      queryset = self.filter_queryset(self.get_queryset())
+      # make sure to catch 404's below
+      id_invitation = services.fetch_invitation_by_code(self.request.data["code"])
+      obj = queryset.get(pk=id_invitation)
+      self.check_object_permissions(self.request, obj)
+      return obj
 
-      if getattr(instance, '_prefetched_objects_cache', None):
-          # If 'prefetch_related' has been applied to a queryset, we need to
-          # forcibly invalidate the prefetch cache on the instance.
-          instance._prefetched_objects_cache = {}
+  def put(self, request):
+    instance = self.get_object()
 
-      return Response(serializer.data)
+    if instance.professor:
+      return Response({'message': 'This invitation was already used'}, status=status.HTTP_400_BAD_REQUEST)
+
+    professor = UserAPIView.get(self, request)
+    partial = professor.data["id"]
+
+    dict_data = {"code": request.data["code"], "professor": partial}
+
+    serializer = self.get_serializer(instance, data=dict_data)
+    serializer.is_valid()
+    
+    try:
+      self.perform_update(serializer)
+    except:
+      return Response({'message': 'You are already accepted as a professor'}, status=status.HTTP_400_BAD_REQUEST)
+
+    if getattr(instance, '_prefetched_objects_cache', None):
+        # If 'prefetch_related' has been applied to a queryset, we need to
+        # forcibly invalidate the prefetch cache on the instance.
+        instance._prefetched_objects_cache = {}
+
+    return Response(serializer.data)
+
+  def perform_update(self, serializer):
+    serializer.save()
+
+  def partial_update(self, request, *args, **kwargs):
+    kwargs['partial'] = True
+    return self.update(request, *args, **kwargs)
         
 
 class LoginAPIView(views.APIView):
