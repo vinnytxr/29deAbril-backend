@@ -3,7 +3,7 @@ from user.serializers import UserSerializer, RoleSerializer, InvitationSerialize
 from rest_framework import viewsets, views, exceptions, status
 from rest_framework.response import Response
 from . import services, authentication, permissions
-from user.permissions import CustomIsAdmin, CustomIsProfessor
+from user.permissions import CustomIsAdmin
 from rest_framework.permissions import AllowAny
 from rest_framework import mixins
 from . import services
@@ -17,6 +17,25 @@ class UserViewSet(viewsets.ModelViewSet):
   queryset = User.objects.all()
   serializer_class = UserSerializer
 
+  def update_role(self, id_user):
+    user = services.fetch_user_by_id(id_user)
+    
+    list_roles = [val for val in user.role.all()]
+
+    list_roles.append(2)
+
+    updated_user = user
+    updated_user.role.set(list_roles)
+
+    _serializer = self.serializer_class(instance=user,
+                                        data=updated_user,
+                                        partial=True) 
+    if _serializer.is_valid():
+        _serializer.save()
+        return Response(data=_serializer.data, status=status.HTTP_201_CREATED) 
+    else:
+        return Response(data=_serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
 class InvitationViewSet(mixins.CreateModelMixin, mixins.ListModelMixin, 
                                 mixins.UpdateModelMixin, mixins.DestroyModelMixin,
                                 viewsets.GenericViewSet):
@@ -25,9 +44,9 @@ class InvitationViewSet(mixins.CreateModelMixin, mixins.ListModelMixin,
   authentication_classes = (authentication.CustomUserAuthentication,)
   
   def get_permissions(self):
-    if self.action == 'update':
-        return [CustomIsProfessor()]
-    return [CustomIsAdmin()]
+    if self.action == 'list' or self.action == 'create':
+        return [CustomIsAdmin()]
+    return [AllowAny()]
                         
   def list(self, request):
     invitations = Invitation.objects.all()
@@ -45,10 +64,15 @@ class InvitationViewSet(mixins.CreateModelMixin, mixins.ListModelMixin,
 
   def get_object(self):
       queryset = self.filter_queryset(self.get_queryset())
-      # make sure to catch 404's below
-      id_invitation = services.fetch_invitation_by_code(self.request.data["code"])
+
+      try:
+        id_invitation = services.fetch_invitation_by_code(self.request.data["code"])
+      except:
+        return Response({'message': 'Invalid invitation'}, status=status.HTTP_400_BAD_REQUEST)
+
       obj = queryset.get(pk=id_invitation)
       self.check_object_permissions(self.request, obj)
+
       return obj
 
   def put(self, request):
@@ -67,6 +91,7 @@ class InvitationViewSet(mixins.CreateModelMixin, mixins.ListModelMixin,
     
     try:
       self.perform_update(serializer)
+      UserViewSet.update_role(UserViewSet, partial)
     except:
       return Response({'message': 'You are already accepted as a professor'}, status=status.HTTP_400_BAD_REQUEST)
 
