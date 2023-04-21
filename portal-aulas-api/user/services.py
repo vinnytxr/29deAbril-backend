@@ -1,6 +1,7 @@
 import datetime
 import jwt
 from . import models
+from . import views
 from django.conf import settings
 from django.utils import timezone
 import pytz
@@ -14,6 +15,11 @@ def fetch_invitation_by_code(code: str)->"Invitation":
     invitation = models.Invitation.objects.filter(code=code).first()
 
     return invitation.id
+
+def fetch_user_by_id(id: int)->"User":
+    user = models.User.objects.filter(id=id).first()
+
+    return user
 
 def create_token(user_id: int)->str:
     payload = {
