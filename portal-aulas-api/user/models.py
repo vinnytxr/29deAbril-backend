@@ -55,6 +55,7 @@ class User(TimeStampedModel, auth_models.AbstractUser):
   photo = models.CharField("foto", max_length=256, blank=True, null=True)
   about = models.TextField("sobre mim", blank=True, null=True)
   role = models.ManyToManyField(Role, verbose_name="cargo")
+  courses = models.ManyToManyField('courses.Course')
 
   username = None
 

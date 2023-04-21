@@ -1,6 +1,9 @@
 from rest_framework import viewsets, status
 from rest_framework.response import Response
 from rest_framework import status
+from rest_framework.decorators import action
+from django.shortcuts import get_object_or_404
+
 from .models import Course, Learning
 from .serializers.course import CourseSerializerForPOSTS, CourseSerializerForGETS
 from .serializers.learning import LearningSerializer
@@ -27,13 +30,30 @@ class CourseViewSet(viewsets.ModelViewSet):
         # /courses/?page=1&size=3
         queryset = self.filter_queryset(self.get_queryset())
 
+        queryset_courses_by_professor = queryset
+        queryset_student_by_student = queryset
+
+
+
         # Verifica se o parâmetro "professor" existe na query string
         professor_id = request.query_params.get('professor')
         if professor_id:
             if not professor_id.isdigit():
                 return Response({'professor': 'This query param must be a integer primary key'}, status=status.HTTP_400_BAD_REQUEST)
             # Filtra o queryset para retornar apenas os cursos associados ao professor com o id passado
-            queryset = queryset.filter(professor__id=professor_id)
+            queryset_courses_by_professor = queryset.filter(professor__id=professor_id)
+
+        student_id = request.query_params.get('student')
+        if student_id:
+            if not student_id.isdigit():
+                return Response({'student': 'This query param must be a integer primary key'}, status=status.HTTP_400_BAD_REQUEST)
+            try:
+                student = User.objects.get(id=student_id)
+                queryset_student_by_student = student.courses.all()
+            except User.DoesNotExist:
+                queryset_student_by_student = Course.objects.none()
+
+        queryset = queryset.intersection(queryset_courses_by_professor, queryset_student_by_student)
 
         # Verifica se o parâmetro "page" existe na query string
         page_number = request.query_params.get('page')
@@ -111,6 +131,18 @@ class CourseViewSet(viewsets.ModelViewSet):
         instance.banner.delete(save=False) 
         self.perform_destroy(instance)
         return Response(status=status.HTTP_204_NO_CONTENT)
+    
+    # Endpoint personalizado que retorna apenas os cursos em que um professor está matriculado
+    @action(detail=False, methods=['post'], url_path='enroll-student/(?P<course_id>\d+)/(?P<student_id>\d+)')
+    def student_courses(self, request, course_id=None, student_id=None):
+        student = get_object_or_404(User, pk=student_id)
+        course = get_object_or_404(Course, pk=course_id)
+
+        student.courses.add(course)
+        student.save()
+
+        serializer = self.get_serializer(course)
+        return Response(serializer.data, status=status.HTTP_201_CREATED)
 
 class LearningViewSet(viewsets.ModelViewSet):
     queryset = Learning.objects.all()

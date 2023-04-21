@@ -1,22 +1,28 @@
 from rest_framework import serializers
 from ..models import Course
 from user.models import User
+# from user.serializers import UserResumeSerializer
 
-class ProfessorResumeSerializer(serializers.ModelSerializer):
+class UserResumeSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
-        fields = ('id', 'name')
+        fields = ['id', 'name']
 
 class CourseSerializerForGETS(serializers.ModelSerializer):
     professor = serializers.SerializerMethodField('get_professor')
+    students = serializers.SerializerMethodField('get_students')
 
     class Meta:
         model = Course
-        fields = ['id', 'title', 'description', 'banner', 'professor', 'learnings']
+        fields = ['id', 'title', 'description', 'banner', 'professor', 'learnings', 'students']
         depth = 1
         
     def get_professor(self, obj):
-        return ProfessorResumeSerializer(obj.professor).data
+        return UserResumeSerializer(obj.professor).data
+    
+    def get_students(self, obj):
+        students = User.objects.filter(courses=obj)
+        return UserResumeSerializer(students, many=True).data
 
 class CourseSerializerForPOSTS(serializers.ModelSerializer):
     professor = serializers.PrimaryKeyRelatedField(queryset=User.objects.all(), required=True)
@@ -28,3 +34,8 @@ class CourseSerializerForPOSTS(serializers.ModelSerializer):
         model = Course
         fields = ['id', 'title', 'description', 'banner', 'professor', 'learnings']
         depth = 1
+
+class CourseResumeSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Course
+        fields = ['id', 'title']
