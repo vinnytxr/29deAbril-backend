@@ -67,3 +67,8 @@ class User(TimeStampedModel, auth_models.AbstractUser):
 
   def __str__(self):
         return self.name
+
+
+class Invitation(models.Model):
+  code = models.CharField(max_length=256, null=False, blank=True)
+  professor = models.OneToOneField(User, on_delete=models.CASCADE, null=True, blank=True)
