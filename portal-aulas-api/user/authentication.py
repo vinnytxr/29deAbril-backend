@@ -10,7 +10,7 @@ class CustomUserAuthentication(authentication.BaseAuthentication):
         token = request.COOKIES.get("jwt")
 
         if not token:
-            return None
+            raise exceptions.AuthenticationFailed({"message": "User not authenticated"})
 
         try:
             payload = jwt.decode(token, settings.JWT_SECRET, algorithms=["HS256"])
