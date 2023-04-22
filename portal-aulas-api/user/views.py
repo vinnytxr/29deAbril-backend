@@ -22,7 +22,7 @@ class UserViewSet(viewsets.ModelViewSet):
     
     list_roles = [val for val in user.role.all()]
 
-    list_roles.append(2)
+    list_roles.append(services.fetch_id_role_by_name("PROFESSOR"))
 
     updated_user = user
     updated_user.role.set(list_roles)
@@ -44,7 +44,7 @@ class InvitationViewSet(mixins.CreateModelMixin, mixins.ListModelMixin,
   authentication_classes = (authentication.CustomUserAuthentication,)
   
   def get_permissions(self):
-    if self.action == 'list' or self.action == 'create':
+    if self.action == 'list' or self.action == 'create' or self.action == 'destroy':
         return [CustomIsAdmin()]
     return [AllowAny()]
                         
@@ -68,7 +68,7 @@ class InvitationViewSet(mixins.CreateModelMixin, mixins.ListModelMixin,
       try:
         id_invitation = services.fetch_invitation_by_code(self.request.data["code"])
       except:
-        return Response({'message': 'Invalid invitation'}, status=status.HTTP_400_BAD_REQUEST)
+        return Response({'message': 'Invitation could not be fetched'}, status=status.HTTP_400_BAD_REQUEST)
 
       obj = queryset.get(pk=id_invitation)
       self.check_object_permissions(self.request, obj)
@@ -108,7 +108,18 @@ class InvitationViewSet(mixins.CreateModelMixin, mixins.ListModelMixin,
   def partial_update(self, request, *args, **kwargs):
     kwargs['partial'] = True
     return self.update(request, *args, **kwargs)
-        
+
+  def delete(self, request):
+        instance = self.get_object()
+        try:
+          self.perform_destroy(instance)
+        except:
+          return Response({'message': 'Invitation could not be destroyed'}, status=status.HTTP_400_BAD_REQUEST)
+          
+        return Response(status=status.HTTP_200_OK)
+
+  def perform_destroy(self, instance):
+      instance.delete()
 
 class LoginAPIView(views.APIView):
   def post(self, request):

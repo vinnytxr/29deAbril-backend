@@ -21,6 +21,11 @@ def fetch_user_by_id(id: int)->"User":
 
     return user
 
+def fetch_id_role_by_name(name: str)->int:
+    role = models.Role.objects.filter(name=name).first()
+
+    return role.id
+
 def create_token(user_id: int)->str:
     payload = {
         "id":user_id,
@@ -37,5 +42,6 @@ def create_invitation()->str:
     }
 
     code=jwt.encode(payload, settings.JWT_SECRET, algorithm="HS256")
+    code = code[-7:]
 
     return code
