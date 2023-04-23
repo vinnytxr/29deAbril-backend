@@ -136,9 +136,9 @@ class LoginAPIView(views.APIView):
 
     token = services.create_token(user_id=user.id)
 
-    resp = Response(status=status.HTTP_200_OK)
+    resp = Response({'token': token}, status=status.HTTP_200_OK)
 
-    resp.set_cookie(key="jwt", value=token, httponly=True)
+    # resp.set_cookie(key="jwt", value=token, httponly=False)
 
     return resp
 
@@ -148,9 +148,7 @@ class UserAPIView(views.APIView):
 
   def get(self, request):
     user = request.user
-
     serializer = UserSerializer(user)
-
     return Response(serializer.data)
 
 class LogoutAPIView(views.APIView):
@@ -158,7 +156,5 @@ class LogoutAPIView(views.APIView):
   permission_classes = (permissions.CustomIsAuthenticated,)
 
   def post(self, request):
-    resp = Response({"message": "User logout"})
-    resp.delete_cookie("jwt")
-
+    resp = Response({"message": "Not implemented"}, status=status.HTTP_400_BAD_REQUEST)
     return resp
