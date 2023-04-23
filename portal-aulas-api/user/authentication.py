@@ -7,10 +7,10 @@ from . import models
 class CustomUserAuthentication(authentication.BaseAuthentication):
 
     def authenticate(self, request):
-        token = request.COOKIES.get("jwt")
+        token = request.headers['jwt']
 
         if not token:
-            return None
+            raise exceptions.AuthenticationFailed({"message": "Authenticate::User not authenticated"})
 
         try:
             payload = jwt.decode(token, settings.JWT_SECRET, algorithms=["HS256"])

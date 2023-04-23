@@ -25,6 +25,8 @@ APPEND_SLASH = False
 # SECURITY WARNING: keep the secret key used in production secret!
 SECRET_KEY = 'django-insecure-_b0w-$0ak_rt2cln)s#)g5^_z%k_cnvn-d+2)u+^xxr#dn++z!'
 JWT_SECRET = "dapibusnecdignissimegetrciDuisaccumsanmiacarcu"
+SESSION_COOKIE_SECURE = False
+SESSION_COOKIE_DOMAIN = None
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
@@ -32,6 +34,7 @@ DEBUG = True
 ALLOWED_HOSTS = ['*']
 CORS_ALLOW_ALL_ORIGINS = True
 CORS_ALLOW_CREDENTIALS = True
+CORS_ALLOW_HEADERS = ('jwt', 'content-type', 'accept')
 
 IMAGES_BASE_URL = "{}/media/images".format(BASE_DIR)
 

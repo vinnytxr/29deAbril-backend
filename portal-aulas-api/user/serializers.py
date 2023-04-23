@@ -1,7 +1,8 @@
-from user.models import User, Role
+from user.models import User, Role, Invitation
 from rest_framework import serializers
 from courses.models import Course
 from courses.serializers.course import CourseResumeSerializer
+from . import services
 
 class RoleSerializer(serializers.ModelSerializer):
     class Meta:
@@ -39,3 +40,18 @@ class UserResumeSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
         fields = ['id', 'name']
+
+class InvitationSerializer(serializers.ModelSerializer):
+
+    professor = serializers.PrimaryKeyRelatedField(queryset=User.objects.all(), allow_null=True)
+
+    class Meta:
+        model = Invitation
+        fields = ['id', 'code', 'professor']
+
+    def create(self, validated_data):
+        code = validated_data.pop('code')
+        code = services.create_invitation()
+
+        invitation = Invitation.objects.create(code=code, **validated_data)
+        return invitation

@@ -35,3 +35,6 @@ db:
 makemigrate:
 	docker exec -it portal-aulas-api sh -c "python /app/manage.py makemigrations && python /app/manage.py migrate"
 
+makemigrate_merge:
+	docker exec -it portal-aulas-api sh -c "python /app/manage.py makemigrations --merge && python /app/manage.py migrate"
+
