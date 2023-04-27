@@ -1,6 +1,8 @@
 from rest_framework import serializers
 from ..models import Course
 from user.models import User
+from lessons.models import Lesson
+from lessons.serializers import LessonSerializer
 # from user.serializers import UserResumeSerializer
 
 class UserResumeSerializer(serializers.ModelSerializer):
@@ -14,13 +16,13 @@ class CourseSerializerForGETS(serializers.ModelSerializer):
 
     class Meta:
         model = Course
-        fields = ['id', 'title', 'description', 'banner', 'professor', 'learnings', 'students']
+        fields = ['id', 'title', 'description', 'banner', 'content', 'professor', 'learnings', 'students', 'lessons']
         depth = 1
         
     def get_professor(self, obj):
         return UserResumeSerializer(obj.professor).data
     
-    def get_students(self, obj):
+    def get_students(self, obj): 
         students = User.objects.filter(courses=obj)
         return UserResumeSerializer(students, many=True).data
 
@@ -32,7 +34,7 @@ class CourseSerializerForPOSTS(serializers.ModelSerializer):
 
     class Meta:
         model = Course
-        fields = ['id', 'title', 'description', 'banner', 'professor', 'learnings']
+        fields = ['id', 'title', 'description', 'banner', 'content', 'professor', 'learnings']
         depth = 1
 
 class CourseResumeSerializer(serializers.ModelSerializer):

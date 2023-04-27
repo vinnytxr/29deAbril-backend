@@ -1,5 +1,5 @@
 from django.db import models
-from user.models import User
+from user.models import User 
 
 import os
 import uuid
@@ -15,6 +15,7 @@ class Course(models.Model):
     description = models.CharField(max_length=265, blank=False)
     banner = models.FileField(upload_to=get_file_path)
     professor = models.ForeignKey(User, on_delete=models.CASCADE, null=False, blank=False)
+    content = models.CharField(max_length=1024, null=False, blank=False)
 
     def __str__(self):
         return self.title 

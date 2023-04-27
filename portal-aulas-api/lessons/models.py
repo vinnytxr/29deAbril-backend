@@ -12,7 +12,7 @@ def get_file_path(instance, filename):
 class Lesson(models.Model):
     id = models.BigAutoField(primary_key=True)
     title = models.CharField(max_length=64, blank=False)
-    content = models.CharField(max_length=512, blank=False)
+    content = models.CharField(max_length=1024, blank=False)
     banner = models.FileField(upload_to=get_file_path)
     course = models.ForeignKey(Course, on_delete=models.CASCADE, related_name='lessons', null=False, blank=False)
 
