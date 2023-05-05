@@ -54,6 +54,7 @@ class User(TimeStampedModel, auth_models.AbstractUser):
   email = models.EmailField("email", max_length=120, unique=True)
   photo = models.CharField("foto", max_length=256, blank=True, null=True)
   about = models.TextField("sobre mim", blank=True, null=True)
+  birth = models.DateField("data de nascimento", null=True)
   role = models.ManyToManyField(Role, verbose_name="cargo")
   courses = models.ManyToManyField('courses.Course')
 
