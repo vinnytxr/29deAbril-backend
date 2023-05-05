@@ -7,7 +7,7 @@ from user.permissions import CustomIsAdmin
 from rest_framework.permissions import AllowAny
 from rest_framework import mixins
 from . import services
-
+from rest_framework.settings import api_settings
 
 class RoleViewSet(viewsets.ModelViewSet):
   queryset = Role.objects.all()
