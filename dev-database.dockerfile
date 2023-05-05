@@ -1,4 +1,4 @@
-FROM postgres:latest
+FROM postgres:15.2
 
 ADD ./init-database-pg.sql /docker-entrypoint-initdb.d/
 
