@@ -53,7 +53,8 @@ class UserManager(auth_models.BaseUserManager):
 class User(TimeStampedModel, auth_models.AbstractUser):
   name = models.CharField("nome", max_length=120)
   email = models.EmailField("email", max_length=120, unique=True)
-  cpf = BRCPFField("CPF", unique=True, null=True)
+  # cpf = BRCPFField("CPF", unique=True, null=True)
+  cpf = models.CharField("CPF", null=True, max_length=11)
   photo = models.CharField("foto", max_length=256, blank=True, null=True)
   about = models.TextField("sobre mim", blank=True, null=True)
   birth = models.DateField("data de nascimento", null=True)
