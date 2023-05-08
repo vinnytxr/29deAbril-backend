@@ -3,3 +3,4 @@ cp ../.env.prod ./.env
 ${pathctl}/flyctl deploy
 
 # /home/alessandro/.fly/bin/flyctl auth logout
+# /home/renangas/.fly/bin/flyctl
