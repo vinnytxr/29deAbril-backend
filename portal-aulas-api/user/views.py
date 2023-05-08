@@ -36,6 +36,36 @@ class UserViewSet(viewsets.ModelViewSet):
       except (TypeError, KeyError):
           return {}
 
+  # [UPDATE] /<id> 
+  # body: multipart/form-data
+  def update(self, request, *args, **kwargs):
+      instance = self.get_object()
+      serializer = self.get_serializer(instance, data=request.data, partial=True)
+      serializer.is_valid(raise_exception=True)
+
+      # Verifica se há uma nova imagem na requisição
+      if 'photo' in request.FILES:
+          # Exclui a imagem antiga
+          instance.photo.delete(save=False)
+          # Salva a nova imagem
+          instance.photo = request.FILES['photo']
+
+      self.perform_update(serializer)
+
+      return Response(serializer.data)
+  
+  # [PATCH] /<id> 
+  # body: multipart/form-data
+  def partial_update(self, request, *args, **kwargs):
+      return self.update(request, *args, **kwargs)
+
+  # [DELETE] /<id>
+  def destroy(self, request, *args, **kwargs):
+      instance = self.get_object()
+      instance.photo.delete(save=False) 
+      self.perform_destroy(instance)
+      return Response(status=status.HTTP_204_NO_CONTENT)
+
   def update_role(self, id_user):
     user = services.fetch_user_by_id(id_user)
     
