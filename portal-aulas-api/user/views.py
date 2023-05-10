@@ -158,3 +158,21 @@ class LogoutAPIView(views.APIView):
   def post(self, request):
     resp = Response({"message": "Not implemented"}, status=status.HTTP_400_BAD_REQUEST)
     return resp
+  
+class SendEmailAPIView(views.APIView):
+  authentication_classes = (authentication.CustomUserAuthentication,)
+  permission_classes = (permissions.CustomIsAdmin,)
+  
+  def post(self, request):
+    userEmail = request.data['email']
+    code = request.data['code']
+    
+    try:
+      services.send_email(
+        subject = 'Código professor (let-cursos)',
+        message = f'Use o código "{code}" para se cadastrar como professor.' ,
+        to_email = userEmail
+      )
+      return Response({"message": "E-mail enviado com sucesso"}, status=status.HTTP_200_OK)
+    except:
+      return Response({"message": "Falha ao enviar e-mail"}, status=status.HTTP_400_BAD_REQUEST)
