@@ -28,6 +28,15 @@ JWT_SECRET = "dapibusnecdignissimegetrciDuisaccumsanmiacarcu"
 SESSION_COOKIE_SECURE = False
 SESSION_COOKIE_DOMAIN = None
 
+# Environments to send email
+EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+EMAIL_HOST = 'smtp.gmail.com'
+EMAIL_USE_TLS = True
+EMAIL_USE_SSL = False
+EMAIL_PORT = 587
+EMAIL_HOST_USER = 'iagoortega123123@gmail.com'
+EMAIL_HOST_PASSWORD = 'idrdxmndrtvnsmnc'
+
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
