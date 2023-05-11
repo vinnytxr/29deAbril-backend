@@ -1,6 +1,6 @@
 from django.urls import path, include
 from rest_framework.routers import DefaultRouter
-from user.views import UserViewSet, RoleViewSet, LoginAPIView, UserAPIView, LogoutAPIView, InvitationViewSet
+from user.views import UserViewSet, RoleViewSet, LoginAPIView, UserAPIView, LogoutAPIView, InvitationViewSet, SendEmailAPIView
 
 app_name = "user"
 
@@ -14,4 +14,5 @@ urlpatterns = [
     path('login/', LoginAPIView.as_view(), name="login"),
     path('user-info/', UserAPIView.as_view(), name="userinfo"),
     path('logout/', LogoutAPIView.as_view(), name="logout"),
+    path('send-email', SendEmailAPIView.as_view(), name="sendemail")
 ]
