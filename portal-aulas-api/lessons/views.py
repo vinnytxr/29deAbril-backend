@@ -1,12 +1,23 @@
 from rest_framework import viewsets, status
 from rest_framework.response import Response
 from .models import Lesson
-from .serializers import LessonSerializer
+from .serializers import LessonSerializer, LessonWithPrevNextSerializer
 
 # Create your views here.
 class LessonViewSet(viewsets.ModelViewSet):
     queryset = Lesson.objects.all()
     serializer_class = LessonSerializer
+
+    def get_serializer_context(self):
+        context = super().get_serializer_context()
+        context['request'] = self.request
+        return context
+
+    def get_serializer_class(self):
+        if self.action in ['retrieve']:
+            return LessonWithPrevNextSerializer
+        else:
+            return LessonSerializer
 
     # [UPDATE] /<id> 
     # body: multipart/form-data
