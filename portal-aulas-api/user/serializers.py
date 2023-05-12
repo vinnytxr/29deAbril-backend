@@ -55,3 +55,10 @@ class InvitationSerializer(serializers.ModelSerializer):
 
         invitation = Invitation.objects.create(code=code, **validated_data)
         return invitation
+
+class ChangePasswordSerializer(serializers.ModelSerializer):
+    model = User
+
+    old_password = serializers.CharField(required=True)
+    new_password = serializers.CharField(required=True)
+        
