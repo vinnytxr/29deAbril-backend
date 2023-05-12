@@ -1,0 +1,15 @@
+[
+    {
+        "model": "user.User",
+        "pk": 1,
+        "fields": {
+            "name": "Admin",
+            "email": "admin@gmail.com",
+            "password": "123456",
+            "about": "Admin user",
+            "role": [3],
+            "created": "2023-05-10T11:00:00-03:00",
+            "modified": "2023-05-10T11:00:00-03:00"
+        }
+    }
+]
