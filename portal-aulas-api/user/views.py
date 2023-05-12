@@ -45,10 +45,11 @@ class UserViewSet(viewsets.ModelViewSet):
 
       # Verifica se há uma nova imagem na requisição
       if 'photo' in request.FILES:
-          # Exclui a imagem antiga
-          instance.photo.delete(save=False)
-          # Salva a nova imagem
-          instance.photo = request.FILES['photo']
+        # Exclui a imagem antiga
+        instance.photo.delete(save=False)
+        
+        # Salva a nova imagem
+        instance.photo = request.FILES['photo']
 
       self.perform_update(serializer)
 
