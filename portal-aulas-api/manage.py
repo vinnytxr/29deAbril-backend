@@ -16,7 +16,14 @@ def main():
             "forget to activate a virtual environment?"
         ) from exc
     execute_from_command_line(sys.argv)
+    
+
+def load_seed_data():
+    from django.core.management import call_command
+    call_command("loaddata", "seed/roles.json")
+    call_command("loaddata", "seed/admin.json")
 
 
 if __name__ == '__main__':
     main()
+    load_seed_data()
