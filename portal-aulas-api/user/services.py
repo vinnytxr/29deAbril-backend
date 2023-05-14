@@ -6,6 +6,9 @@ from django.conf import settings
 from django.utils import timezone
 import pytz
 
+from django.core.mail import EmailMessage, get_connection
+from django.conf import settings
+
 def fetch_user_by_email(email: str)->"User":
     user = models.User.objects.filter(email=email).first()
 
@@ -54,3 +57,17 @@ def validate_age(birth_date)->bool:
     if (today.year - birth_obj.year) < 7:
         return False
     return True
+def send_email(subject: str, message: str, to_email: str):
+    with get_connection(  
+        host=settings.EMAIL_HOST, 
+            port=settings.EMAIL_PORT,  
+            username=settings.EMAIL_HOST_USER, 
+            password=settings.EMAIL_HOST_PASSWORD, 
+            use_tls=settings.EMAIL_USE_TLS  
+        ) as connection:  
+            email_from = settings.EMAIL_HOST_USER  
+            recipient_list = [f'{to_email}']  
+            email = EmailMessage(subject, message, email_from, recipient_list, connection=connection)
+            email.content_subtype = "html"
+            email.send()
+        
