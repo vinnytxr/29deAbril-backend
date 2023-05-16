@@ -16,6 +16,58 @@ class LessonViewSet(viewsets.ModelViewSet):
     queryset = Lesson.objects.all()
     serializer_class = LessonSerializer
 
+    def create(self, request, *args, **kwargs):
+
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+
+        self.perform_create(serializer)
+        # Retrieve the saved object
+        lesson = serializer.instance
+
+        if 'banner' not in request.data and lesson.video is not None:
+            # Access the 'banner' attribute of the saved object
+            video_partial_relative_path = lesson.video.url
+            if len(video_partial_relative_path) > 0 and video_partial_relative_path[0] == '/':
+                video_partial_relative_path = video_partial_relative_path[1:]
+
+            pasta_raiz = os.getcwd()
+            default_path_to_store_temp_images_of_video = os.path.join(pasta_raiz, settings.MEDIA_ROOT, 'videos/courses/lessons')
+            temp_video_full_path = os.path.join(pasta_raiz, video_partial_relative_path)
+            name, extension = os.path.splitext(os.path.basename(temp_video_full_path))
+            video_name = name
+            temp_banner_path = os.path.join(default_path_to_store_temp_images_of_video, f'{video_name}.jpg')
+
+            print(temp_banner_path)
+            print(temp_video_full_path)
+
+            try:
+                # Read the first frame of the video using OpenCV
+                video_capture = cv2.VideoCapture(temp_video_full_path)
+                ret, frame = video_capture.read() 
+                video_capture.release()
+
+                if ret:
+                    cv2.imwrite(temp_banner_path, frame)
+
+                    with open(temp_banner_path, 'rb') as file:
+                        lesson.banner.save('_.jpg', file)
+                    lesson.save()
+
+                    try:
+                        os.remove(temp_banner_path)
+                        print(f"Arquivo {temp_banner_path} removido com sucesso.")
+                    except OSError as e:
+                        print(f"Falha ao remover o arquivo {temp_banner_path}: {str(e)}")
+                else:
+                    return Response({'error': 'Failed to capture the first frame of the video'}, status=status.HTTP_400_BAD_REQUEST)
+
+            except Exception as e:
+                return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
+
+        headers = self.get_success_headers(serializer.data)
+        return Response(serializer.data, status=status.HTTP_201_CREATED, headers=headers)
+
     # [UPDATE] /<id> 
     # body: multipart/form-data
     def update(self, request, *args, **kwargs):
