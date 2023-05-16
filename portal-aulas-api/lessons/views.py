@@ -8,6 +8,7 @@ from django.http import FileResponse, Http404, JsonResponse
 from django.conf import settings
 from django.http.response import StreamingHttpResponse
 import os
+import cv2
 from wsgiref.util import FileWrapper
 
 # Create your views here.
