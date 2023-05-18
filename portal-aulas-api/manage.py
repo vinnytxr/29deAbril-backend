@@ -26,4 +26,4 @@ def load_seed_data():
 
 if __name__ == '__main__':
     main()
-    load_seed_data()
+    # load_seed_data()

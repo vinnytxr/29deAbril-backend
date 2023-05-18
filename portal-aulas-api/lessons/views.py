@@ -1,12 +1,81 @@
 from rest_framework import viewsets, status
 from rest_framework.response import Response
+from rest_framework.decorators import action
+from django.shortcuts import get_object_or_404
 from .models import Lesson
 from .serializers import LessonSerializer
+from django.http import FileResponse, Http404, JsonResponse
+from django.conf import settings
+from django.http.response import StreamingHttpResponse
+import os
+import cv2
+from wsgiref.util import FileWrapper
+from .serializers import LessonSerializer, LessonWithPrevNextSerializer
 
 # Create your views here.
 class LessonViewSet(viewsets.ModelViewSet):
     queryset = Lesson.objects.all()
     serializer_class = LessonSerializer
+
+    def get_serializer_context(self):
+        context = super().get_serializer_context()
+        context['request'] = self.request
+        return context
+
+    def get_serializer_class(self):
+        if self.action in ['retrieve']:
+            return LessonWithPrevNextSerializer
+        else:
+            return LessonSerializer
+        
+    def create(self, request, *args, **kwargs):
+
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+
+        self.perform_create(serializer)
+        # Retrieve the saved object
+        lesson = serializer.instance
+
+        if 'banner' not in request.data and lesson.video is not None:
+            # Access the 'banner' attribute of the saved object
+            video_partial_relative_path = lesson.video.url
+            if len(video_partial_relative_path) > 0 and video_partial_relative_path[0] == '/':
+                video_partial_relative_path = video_partial_relative_path[1:]
+
+            pasta_raiz = os.getcwd()
+            default_path_to_store_temp_images_of_video = os.path.join(pasta_raiz, settings.MEDIA_ROOT, 'videos/courses/lessons')
+            temp_video_full_path = os.path.join(pasta_raiz, video_partial_relative_path)
+            name, extension = os.path.splitext(os.path.basename(temp_video_full_path))
+            video_name = name
+            temp_banner_path = os.path.join(default_path_to_store_temp_images_of_video, f'{video_name}.jpg')
+
+            try:
+                # Read the first frame of the video using OpenCV
+                video_capture = cv2.VideoCapture(temp_video_full_path)
+                ret, frame = video_capture.read() 
+                video_capture.release()
+
+                if ret:
+                    cv2.imwrite(temp_banner_path, frame)
+
+                    with open(temp_banner_path, 'rb') as file:
+                        lesson.banner.save('_.jpg', file)
+                    lesson.save()
+
+                    try:
+                        os.remove(temp_banner_path)
+                        print(f"Arquivo {temp_banner_path} removido com sucesso.")
+                    except OSError as e:
+                        print(f"Falha ao remover o arquivo {temp_banner_path}: {str(e)}")
+                else:
+                    return Response({'error': 'Failed to capture the first frame of the video'}, status=status.HTTP_400_BAD_REQUEST)
+
+            except Exception as e:
+                return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
+
+        headers = self.get_success_headers(serializer.data)
+        return Response(serializer.data, status=status.HTTP_201_CREATED, headers=headers)
 
     # [UPDATE] /<id> 
     # body: multipart/form-data
@@ -22,11 +91,106 @@ class LessonViewSet(viewsets.ModelViewSet):
             # Salva a nova imagem
             instance.banner = request.FILES['banner']
 
+        if 'video' in request.FILES:
+            # Exclui a imagem antiga
+            instance.video.delete(save=False)
+            # Salva a nova imagem
+            instance.video = request.FILES['video']
+
         self.perform_update(serializer)
 
+        lesson = serializer.instance
+
+        if 'banner' not in request.data and 'video' in request.data and lesson.video is not None:
+            # Access the 'banner' attribute of the saved object
+            video_partial_relative_path = lesson.video.url
+            if len(video_partial_relative_path) > 0 and video_partial_relative_path[0] == '/':
+                video_partial_relative_path = video_partial_relative_path[1:]
+
+            pasta_raiz = os.getcwd()
+            default_path_to_store_temp_images_of_video = os.path.join(pasta_raiz, settings.MEDIA_ROOT, 'videos/courses/lessons')
+            temp_video_full_path = os.path.join(pasta_raiz, video_partial_relative_path)
+            name, extension = os.path.splitext(os.path.basename(temp_video_full_path))
+            video_name = name
+            temp_banner_path = os.path.join(default_path_to_store_temp_images_of_video, f'{video_name}.jpg')
+
+            try:
+                # Read the first frame of the video using OpenCV
+                video_capture = cv2.VideoCapture(temp_video_full_path)
+                ret, frame = video_capture.read() 
+                video_capture.release()
+
+                if ret:
+                    cv2.imwrite(temp_banner_path, frame)
+
+                    with open(temp_banner_path, 'rb') as file:
+                        lesson.banner.save('_.jpg', file)
+                    lesson.save()
+
+                    try:
+                        os.remove(temp_banner_path)
+                        print(f"Arquivo {temp_banner_path} removido com sucesso.")
+                    except OSError as e:
+                        print(f"Falha ao remover o arquivo {temp_banner_path}: {str(e)}")
+                else:
+                    return Response({'error': 'Failed to capture the first frame of the video'}, status=status.HTTP_400_BAD_REQUEST)
+
+            except Exception as e:
+                return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
+            
         return Response(serializer.data)
     
     # [PATCH] /<id> 
     # body: multipart/form-data
     def partial_update(self, request, *args, **kwargs):
         return self.update(request, *args, **kwargs)
+
+    # Endpoint personalizado para upload de video
+    @action(detail=False, methods=['get'], url_path='stream-video/(?P<path>[^\s]+)')
+    def stream_video(self, request, path=None):
+
+        print("path: "+path)
+
+        full_path = os.path.join(settings.MEDIA_ROOT, 'images', 'courses', 'lessons', path)
+        if os.path.exists(full_path):
+            response = FileResponse(open(full_path, 'rb'), content_type='video/mp4')
+            return response
+        else:
+            return Response({'detail': 'File not found.'}, status=404)
+        
+    @action(detail=False, methods=['get'], url_path='files')
+    def stream_video(self, request, path=None):
+        # get the full path of the folder
+        # folder_path = os.path.join(os.getcwd(), folder_path)
+        folder_path = '/app/media'
+
+        # iterate over all files in the folder and subfolders
+        files = []
+        total_size = 0
+        for dirpath, dirnames, filenames in os.walk(folder_path):
+            for filename in filenames:
+                # get the full path of the file
+                file_path = os.path.join(dirpath, filename)
+                # get the file size in bytes
+                file_size = os.path.getsize(file_path)
+                # convert file size to MB
+                file_size_mb = file_size / (1024 * 1024)
+                # add file information to list
+                files.append({'path': file_path, 'size_mb': file_size_mb})
+                # add file size to total size
+                total_size += file_size
+
+        # convert total size to MB
+        total_size_mb = total_size / (1024 * 1024)
+
+        # create response JSON
+        response_data = {
+            'files': files,
+            'total': total_size_mb
+        }
+
+        # return response
+        return JsonResponse(response_data)
+        
+
+        
