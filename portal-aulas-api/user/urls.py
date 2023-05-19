@@ -1,6 +1,17 @@
 from django.urls import path, include
 from rest_framework.routers import DefaultRouter
-from user.views import UserViewSet, RoleViewSet, LoginAPIView, UserAPIView, LogoutAPIView, InvitationViewSet, SendEmailAPIView, ChangePasswordAPIView
+from user.views import (
+    UserViewSet,
+    RoleViewSet,
+    LoginAPIView,
+    UserAPIView,
+    LogoutAPIView,
+    InvitationViewSet,
+    SendEmailAPIView,
+    ChangePasswordAPIView,
+    GeneratePasswordAPIView
+)
+
 
 app_name = "user"
 
@@ -16,4 +27,5 @@ urlpatterns = [
     path('logout/', LogoutAPIView.as_view(), name="logout"),
     path('send-email', SendEmailAPIView.as_view(), name="sendemail"),
     path('change-password', ChangePasswordAPIView.as_view(), name='changepassword'),
+    path('generate-password', GeneratePasswordAPIView.as_view(), name='generatepassword'),
 ]
