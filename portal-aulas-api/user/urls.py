@@ -8,12 +8,12 @@ router = DefaultRouter()
 router.register(r'user', UserViewSet)
 router.register(r'role', RoleViewSet)
 router.register(r'invitation', InvitationViewSet)
+router.register(r'perfil', UserPerfil)
 
 urlpatterns = [
     path('', include(router.urls)),
     path('login/', LoginAPIView.as_view(), name="login"),
     path('user-info/', UserAPIView.as_view(), name="userinfo"),
-    path('user-perfil', UserPerfil.as_view(), name="userperfil"),
     path('logout/', LogoutAPIView.as_view(), name="logout"),
     path('send-email', SendEmailAPIView.as_view(), name="sendemail")
 ]
