@@ -1,6 +1,7 @@
 from django.db import models
 from django.contrib.auth import models as auth_models
 from enum import Enum
+from localflavor.br.models import BRCPFField
 
 from django_extensions.db.models import (
     TimeStampedModel 
@@ -52,8 +53,11 @@ class UserManager(auth_models.BaseUserManager):
 class User(TimeStampedModel, auth_models.AbstractUser):
   name = models.CharField("nome", max_length=120)
   email = models.EmailField("email", max_length=120, unique=True)
+  # cpf = BRCPFField("CPF", unique=True, null=True)
+  cpf = models.CharField("CPF", null=True, max_length=11)
   photo = models.CharField("foto", max_length=256, blank=True, null=True)
   about = models.TextField("sobre mim", blank=True, null=True)
+  birth = models.DateField("data de nascimento", null=True)
   role = models.ManyToManyField(Role, verbose_name="cargo")
   courses = models.ManyToManyField('courses.Course')
 

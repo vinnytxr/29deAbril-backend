@@ -7,7 +7,7 @@ from user.permissions import CustomIsAdmin
 from rest_framework.permissions import AllowAny
 from rest_framework import mixins
 from . import services
-
+from rest_framework.settings import api_settings
 
 class RoleViewSet(viewsets.ModelViewSet):
   queryset = Role.objects.all()
@@ -16,6 +16,25 @@ class RoleViewSet(viewsets.ModelViewSet):
 class UserViewSet(viewsets.ModelViewSet):
   queryset = User.objects.all()
   serializer_class = UserSerializer
+
+  def create(self, request, *args, **kwargs):
+        if not services.validate_age(request.data['birth']):
+          return Response({'message': 'User is too young'}, status=status.HTTP_400_BAD_REQUEST)
+
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        self.perform_create(serializer)
+        headers = self.get_success_headers(serializer.data)
+        return Response(serializer.data, status=status.HTTP_201_CREATED, headers=headers)
+
+  def perform_create(self, serializer):
+      serializer.save()
+
+  def get_success_headers(self, data):
+      try:
+          return {'Location': str(data[api_settings.URL_FIELD_NAME])}
+      except (TypeError, KeyError):
+          return {}
 
   def update_role(self, id_user):
     user = services.fetch_user_by_id(id_user)
