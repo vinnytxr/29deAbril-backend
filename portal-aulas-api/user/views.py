@@ -201,12 +201,15 @@ class GeneratePasswordAPIView(views.APIView):
   
   def post(self, request):
     userEmail = request.data['email']
-    user = services.fetch_user_by_email(userEmail)
+    
+    try:
+      user = services.fetch_user_by_email(userEmail)
+      new_password = User.objects.make_random_password(length=6)
 
-    new_password = User.objects.make_random_password(length=6)
-
-    user.set_password(new_password)
-    user.save()
+      user.set_password(new_password)
+      user.save()
+    except:
+      return Response({"message": "Usuário não cadastrado"}, status=status.HTTP_400_BAD_REQUEST)
       
     try:
       services.send_email(
