@@ -1,5 +1,5 @@
 from user.models import User, Role, Invitation
-from user.serializers import UserSerializer, RoleSerializer, InvitationSerializer, ChangePasswordSerializer
+from user.serializers import UserSerializer, RoleSerializer, InvitationSerializer
 from rest_framework import viewsets, views, exceptions, status
 from rest_framework.response import Response
 from . import services, authentication, permissions
@@ -178,33 +178,42 @@ class SendEmailAPIView(views.APIView):
       return Response({"message": "Falha ao enviar e-mail"}, status=status.HTTP_400_BAD_REQUEST)
     
 class ChangePasswordAPIView(views.APIView):
-    serializer_class = ChangePasswordSerializer
-    permission_classes = (permissions.CustomIsAuthenticated,)
-    model = User
+  authentication_classes = (authentication.CustomUserAuthentication,)
+  
+  def put(self, request):
+      user = request.user
+      
+      if 'old_password' not in request.data:
+          return Response({'error': 'A senha atual é obrigatória.'}, status=status.HTTP_400_BAD_REQUEST)
 
-    def get_object(self, queryset=None):
-        obj = self.request.user
-        return obj
+      if 'new_password' not in request.data:
+          return Response({'error': 'A nova senha é obrigatória.'}, status=status.HTTP_400_BAD_REQUEST)
 
-    def update(self, request, *args, **kwargs):
-        self.object = self.get_object()
-        serializer = self.get_serializer(data=request.data)
+      if not user.check_password(request.data['old_password']):
+          return Response({'error': 'A senha atual fornecida é incorreta.'}, status=status.HTTP_400_BAD_REQUEST)
 
-        if serializer.is_valid():
-            # Check old password
-            if not self.object.check_password(serializer.data.get("old_password")):
-                return Response({"old_password": ["Wrong password."]}, status=status.HTTP_400_BAD_REQUEST)
-            # set_password also hashes the password that the user will get
-            self.object.set_password(serializer.data.get("new_password"))
-            self.object.save()
+      user.set_password(request.data['new_password'])
+      user.save()
 
-            response = {
-                'status': 'success',
-                'code': status.HTTP_200_OK,
-                'message': 'Password updated successfully',
-                'data': []
-            }
+      return Response({'message': 'Senha alterada com sucesso.'}, status=status.HTTP_200_OK)
+    
+class GeneratePasswordAPIView(views.APIView):
+  
+  def post(self, request):
+    userEmail = request.data['email']
+    user = services.fetch_user_by_email(userEmail)
 
-            return Response(response)
+    new_password = User.objects.make_random_password(length=6)
 
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+    user.set_password(new_password)
+    user.save()
+      
+    try:
+      services.send_email(
+        subject = 'Senha temporária (let-cursos)',
+        message = f'Sua nova senha temporária é "{new_password}".' ,
+        to_email = userEmail
+      )
+      return Response({"message": "E-mail enviado com sucesso"}, status=status.HTTP_200_OK)
+    except:
+      return Response({"message": "Falha ao enviar e-mail"}, status=status.HTTP_400_BAD_REQUEST)
