@@ -1,6 +1,6 @@
-from rest_framework import viewsets, status
+from ..user import authentication
+from rest_framework import viewsets, views, status
 from rest_framework.response import Response
-from rest_framework import statu, views
 from rest_framework.decorators import action
 from django.shortcuts import get_object_or_404
 
@@ -8,7 +8,6 @@ from .models import Course, Learning
 from .serializers.course import CourseSerializerForPOSTS, CourseSerializerForGETS
 from .serializers.learning import LearningSerializer
 from user.models import User, ROLES
-from . import authentication
 
 class CourseViewSet(viewsets.ModelViewSet):
     queryset = Course.objects.all()
@@ -144,35 +143,25 @@ class CourseViewSet(viewsets.ModelViewSet):
 
         serializer = self.get_serializer(course)
         return Response(serializer.data, status=status.HTTP_201_CREATED)
+    
+class FavoriteCourseAPIView(views.APIView):
+    authentication_classes = (authentication.CustomUserAuthentication,)
+    
+    # Endpoint personalizado que retorna apenas os cursos em que um usuário favoritou
+    @action(detail=False, methods=['post'], url_path='(?P<course_id>\d+)')
+    def student_favorite_courses(self, request, course_id=None):
+        user = request.user
+        course = get_object_or_404(Course, pk=course_id)
+        
+        user.favorite_courses.add(course)
+        user.save()
+
+        serializer = self.get_serializer(course)
+        return Response(serializer.data, status=status.HTTP_201_CREATED)
+    
+    
 
 class LearningViewSet(viewsets.ModelViewSet):
     queryset = Learning.objects.all()
     serializer_class = LearningSerializer
-    
-class FavoriteCourseAPIView(views.APIView):
-    authentication_classes = (authentication.CustomUserAuthentication,)
-  
-    def get_serializer_class(self):
-            if self.action in ['create', 'update', 'partial_update']:
-                return CourseSerializerForPOSTS
-            else:
-                return CourseSerializerForGETS
-    
-    def get(self, request):
-        aluno = request.user  # Supondo que o aluno esteja autenticado e representado pelo objeto User
-        cursos_favoritos = aluno.favorite_courses.all()
-        serializer = self.get_serializer_class()
-        serializer.CourseSerializer(cursos_favoritos, many=True)
-        return Response(serializer.data, status=status.HTTP_200_OK)
 
-    def post(self, request):
-        aluno = request.user
-        cursoId = request.data['course_id']
-        
-        try:
-            curso = Course.objects.get(id=cursoId)
-        except Course.DoesNotExist:
-            return Response({'error': 'O curso solicitado não existe.'}, status=status.HTTP_404_NOT_FOUND)
-        
-        aluno.favorite_courses.add(curso)
-        return Response({'success': 'Curso favoritado com sucesso.'}, status=status.HTTP_200_OK)
