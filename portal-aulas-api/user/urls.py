@@ -1,6 +1,6 @@
 from django.urls import path, include
 from rest_framework.routers import DefaultRouter
-from user.views import UserViewSet, RoleViewSet, LoginAPIView, UserAPIView, LogoutAPIView, InvitationViewSet, SendEmailAPIView
+from user.views import UserViewSet, RoleViewSet, LoginAPIView, UserAPIView, LogoutAPIView, InvitationViewSet, SendEmailAPIView, UserPerfil
 
 app_name = "user"
 
@@ -13,6 +13,7 @@ urlpatterns = [
     path('', include(router.urls)),
     path('login/', LoginAPIView.as_view(), name="login"),
     path('user-info/', UserAPIView.as_view(), name="userinfo"),
+    path('user-perfil', UserPerfil.as_view(), name="userperfil"),
     path('logout/', LogoutAPIView.as_view(), name="logout"),
     path('send-email', SendEmailAPIView.as_view(), name="sendemail")
 ]
