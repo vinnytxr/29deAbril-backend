@@ -49,6 +49,14 @@ def create_invitation()->str:
 
     return code
 
+def validate_age(birth_date)->bool:
+    today = datetime.date.today()
+
+    birth_obj = datetime.datetime.strptime(birth_date, '%Y-%m-%d')
+
+    if (today.year - birth_obj.year) < 7:
+        return False
+    return True
 def send_email(subject: str, message: str, to_email: str):
     with get_connection(  
         host=settings.EMAIL_HOST, 

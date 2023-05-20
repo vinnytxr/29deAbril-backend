@@ -3,6 +3,9 @@ from rest_framework import serializers
 from courses.models import Course
 from courses.serializers.course import CourseResumeSerializer
 from . import services
+from rest_framework.exceptions import ValidationError
+from rest_framework.response import Response
+from rest_framework import status
 
 class RoleSerializer(serializers.ModelSerializer):
     class Meta:
@@ -16,7 +19,7 @@ class UserSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = User
-        fields = ('id', 'name', 'email', 'password', 'photo', 'about', 'role', 'enrolled_courses', 'created_courses', 'favorite_courses', 'created', 'modified')
+        fields = ('id', 'name', 'email', 'cpf', 'password', 'photo', 'about', 'birth', 'role', 'enrolled_courses', 'created_courses', 'favorite_courses', 'created', 'modified')
         extra_kwargs = {'password': {'required': True}}
 
     def create(self, validated_data):
