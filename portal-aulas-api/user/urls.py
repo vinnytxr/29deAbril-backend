@@ -8,7 +8,10 @@ from user.views import (
     LogoutAPIView,
     InvitationViewSet,
     SendEmailAPIView,
+    ChangePasswordAPIView,
+    GeneratePasswordAPIView
 )
+
 
 app_name = "user"
 
@@ -23,4 +26,6 @@ urlpatterns = [
     path('user-info/', UserAPIView.as_view(), name="userinfo"),
     path('logout/', LogoutAPIView.as_view(), name="logout"),
     path('send-email', SendEmailAPIView.as_view(), name="sendemail"),
+    path('change-password', ChangePasswordAPIView.as_view(), name='changepassword'),
+    path('generate-password', GeneratePasswordAPIView.as_view(), name='generatepassword'),
 ]
