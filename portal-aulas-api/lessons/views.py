@@ -180,7 +180,33 @@ class LessonViewSet(viewsets.ModelViewSet):
     def partial_update(self, request, *args, **kwargs):
         return self.update(request, *args, **kwargs)
 
+    @action(detail=False, methods=['get'], url_path='stream-video/(?P<path>[^\s]+)')
+    def stream_video(self, request, path=None):
 
+        full_path = os.path.join(settings.MEDIA_ROOT, 'videos', 'courses', 'lessons', path)
+
+        if not os.path.exists(full_path):
+            raise Http404("File not found")
+        range_header = request.META.get('HTTP_RANGE', '').strip()
+        range_match = range_re.match(range_header)
+        size = os.path.getsize(full_path)
+        content_type, encoding = mimetypes.guess_type(full_path)
+        content_type = content_type or 'application/octet-stream'
+        if range_match:
+            first_byte, last_byte = range_match.groups()
+            first_byte = int(first_byte) if first_byte else 0
+            last_byte = int(last_byte) if last_byte else size - 1
+            if last_byte >- size:
+                last_byte = size - 1
+            length = last_byte - first_byte + 1
+            resp = StreamingHttpResponse(RangeFileWrapper(open(full_path, 'rb'), offset=first_byte, length=length), status=206, content_type=content_type)
+            resp['Content-Length'] = str(length)
+            resp['Content-Range'] = 'bytes %s-%s/%s' % (first_byte, last_byte, size)
+        else:
+            resp = StreamingHttpResponse(FileWrapper(open(full_path, 'rb')), content_type=content_type)
+            resp['Content-Length'] = str(size)
+        resp['Accept-Ranges'] = 'bytes'
+        return resp
         
     @action(detail=False, methods=['get'], url_path='files')
     def info_files(self, request, path=None):
