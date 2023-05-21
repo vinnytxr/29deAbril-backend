@@ -1,0 +1,28 @@
+[
+    {
+        "model": "user.User",
+        "pk": 2,
+        "fields": {
+            "name": "Aluno",
+            "email": "aluno@gmail.com",
+            "password": "123456",
+            "about": "Aluno user",
+            "role": [1],
+            "created": "2023-05-10T11:00:00-03:00",
+            "modified": "2023-05-10T11:00:00-03:00"
+        }
+    },
+    {
+        "model": "user.User",
+        "pk": 3,
+        "fields": {
+            "name": "Professor",
+            "email": "professor@gmail.com",
+            "password": "123456",
+            "about": "Professor user",
+            "role": [2],
+            "created": "2023-05-10T11:00:00-03:00",
+            "modified": "2023-05-10T11:00:00-03:00"
+        }
+    }
+]

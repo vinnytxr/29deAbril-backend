@@ -1,4 +1,5 @@
 from user.models import User, Role, Invitation
+from courses.models import Course
 from user.serializers import UserSerializer, RoleSerializer, InvitationSerializer
 from rest_framework import viewsets, views, exceptions, status
 from rest_framework.response import Response

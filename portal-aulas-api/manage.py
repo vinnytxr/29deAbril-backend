@@ -22,6 +22,7 @@ def load_seed_data():
     from django.core.management import call_command
     call_command("loaddata", "seed/roles.json")
     call_command("loaddata", "seed/admin.json")
+    call_command("loaddata", "seed/users.json")
 
 
 if __name__ == '__main__':
