@@ -7,10 +7,44 @@ from .serializers import LessonSerializer
 from django.http import FileResponse, Http404, JsonResponse
 from django.conf import settings
 from django.http.response import StreamingHttpResponse
-import os
-import cv2
 from wsgiref.util import FileWrapper
 from .serializers import LessonSerializer, LessonWithPrevNextSerializer
+from wsgiref.util import FileWrapper
+import os
+import cv2
+import re
+import mimetypes
+
+range_re = re.compile(r'bytes\s*=\s*(\d+)\s*-\s*(\d*)', re.I)
+
+class RangeFileWrapper(object):
+    def __init__(self, filelike, blksize=8192, offset=0, length=None):
+        self.filelike = filelike
+        self.filelike.seek(offset, os.SEEK_SET)
+        self.remaining = length
+        self.blksize = blksize
+
+    def close(self):
+        if hasattr(self.filelike, 'close'):
+            self.filelike.close()
+
+    def __iter__(self):
+        return self
+    
+    def __next__(self):
+        if(self.remaining is None):
+            data = self.filelike.read(self.blksize)
+            if data:
+                return data
+            raise StopIteration()
+        else:
+            if self.remaining <= 0:
+                raise StopIteration()
+            data = self.filelike.read(min(self.remaining, self.blksize))
+            if not data:
+                raise StopIteration()
+            self.remaining -= len(data)
+            return data
 
 # Create your views here.
 class LessonViewSet(viewsets.ModelViewSet):
@@ -23,6 +57,7 @@ class LessonViewSet(viewsets.ModelViewSet):
         return context
 
     def get_serializer_class(self):
+        print("GET SERIALIZER")
         if self.action in ['retrieve']:
             return LessonWithPrevNextSerializer
         else:
@@ -145,23 +180,11 @@ class LessonViewSet(viewsets.ModelViewSet):
     def partial_update(self, request, *args, **kwargs):
         return self.update(request, *args, **kwargs)
 
-    # Endpoint personalizado para upload de video
-    @action(detail=False, methods=['get'], url_path='stream-video/(?P<path>[^\s]+)')
-    def stream_video(self, request, path=None):
 
-        print("path: "+path)
-
-        full_path = os.path.join(settings.MEDIA_ROOT, 'images', 'courses', 'lessons', path)
-        if os.path.exists(full_path):
-            response = FileResponse(open(full_path, 'rb'), content_type='video/mp4')
-            return response
-        else:
-            return Response({'detail': 'File not found.'}, status=404)
         
     @action(detail=False, methods=['get'], url_path='files')
-    def stream_video(self, request, path=None):
-        # get the full path of the folder
-        # folder_path = os.path.join(os.getcwd(), folder_path)
+    def info_files(self, request, path=None):
+
         folder_path = '/app/media'
 
         # iterate over all files in the folder and subfolders
