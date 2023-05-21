@@ -57,7 +57,6 @@ class LessonViewSet(viewsets.ModelViewSet):
         return context
 
     def get_serializer_class(self):
-        print("GET SERIALIZER")
         if self.action in ['retrieve']:
             return LessonWithPrevNextSerializer
         else:
