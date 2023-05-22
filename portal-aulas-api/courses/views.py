@@ -144,6 +144,25 @@ class CourseViewSet(viewsets.ModelViewSet):
         serializer = self.get_serializer(course)
         return Response(serializer.data, status=status.HTTP_201_CREATED)
 
+    @action(detail=False, methods=['patch'], url_path='update-rating/(?P<course_id>\d+)')
+    def update_rating(self, request, course_id=None):
+        instance = get_object_or_404(Course, pk=course_id)
+
+        n_ratings = instace.count_ratings + 1
+
+        new_rate = (instace.rating + request.data["rating"]) / n_ratings
+
+        request.data["rating"] = round(new_rate, 1)
+
+        request.data.append({"count_ratings": n_ratings})
+
+        serializer = self.get_serializer(instance, data=request.data, partial=True)
+        serializer.is_valid(raise_exception=True)
+
+        self.perform_update(serializer)
+
+        return Response(serializer.data)
+
 class LearningViewSet(viewsets.ModelViewSet):
     queryset = Learning.objects.all()
     serializer_class = LearningSerializer
