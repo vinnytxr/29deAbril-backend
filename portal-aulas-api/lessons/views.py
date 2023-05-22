@@ -3,6 +3,7 @@ from rest_framework.response import Response
 from rest_framework.decorators import action
 from django.shortcuts import get_object_or_404
 from .models import Lesson
+from user.models import User
 from .serializers import LessonSerializer
 from django.http import FileResponse, Http404, JsonResponse
 from django.conf import settings
@@ -178,7 +179,9 @@ class LessonViewSet(viewsets.ModelViewSet):
     # body: multipart/form-data
     def partial_update(self, request, *args, **kwargs):
         return self.update(request, *args, **kwargs)
-
+    
+    
+    
     @action(detail=False, methods=['get'], url_path='stream-video/(?P<path>[^\s]+)')
     def stream_video(self, request, path=None):
 

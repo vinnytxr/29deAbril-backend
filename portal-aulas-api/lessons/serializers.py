@@ -14,6 +14,7 @@ class LessonWithPrevNextSerializer(serializers.ModelSerializer):
     class Meta:
         model = Lesson
         fields = '__all__'
+        depth = 0
     
     def get_prev_lesson(self, obj):
         prev_lesson = Lesson.objects.filter(course=obj.course, id__lt=obj.id).order_by('-id').first()
