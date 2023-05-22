@@ -215,9 +215,6 @@ class UserPerfil(viewsets.ModelViewSet):
   queryset = User.objects.all()
   serializer_class = UserSerializer
 
-  authentication_classes = (authentication.CustomUserAuthentication,)
-  permission_classes = (permissions.CustomIsAuthenticated,)
-
   def retrieve(self, request, *args, **kwargs):
     instance = self.get_object()
     serializer = self.get_serializer(instance)
