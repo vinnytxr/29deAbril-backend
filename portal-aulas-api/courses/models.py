@@ -16,6 +16,8 @@ class Course(models.Model):
     banner = models.FileField(upload_to=get_file_path)
     professor = models.ForeignKey(User, on_delete=models.CASCADE, null=False, blank=False)
     content = models.CharField(max_length=1024, null=False, blank=False)
+    rating = models.FloatField(default=0.0, null=True)
+    count_ratings = models.IntegerField(default=0, null=True)
 
     def __str__(self):
         return self.title 
