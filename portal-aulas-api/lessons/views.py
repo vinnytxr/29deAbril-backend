@@ -180,7 +180,16 @@ class LessonViewSet(viewsets.ModelViewSet):
     def partial_update(self, request, *args, **kwargs):
         return self.update(request, *args, **kwargs)
     
-    
+    @action(detail=False, methods=['post'], url_path='complete-course/(?P<lesson_id>\d+)/(?P<student_id>\d+)')
+    def complete_course(self, request, lesson_id=None, student_id=None):
+        lesson = get_object_or_404(Lesson, pk=lesson_id)
+        student = get_object_or_404(User, pk=student_id)
+
+        lesson.users_who_completed.add(student)
+        lesson.save()
+
+        serializer = self.get_serializer(lesson)
+        return Response(serializer.data, status=status.HTTP_201_CREATED)
     
     @action(detail=False, methods=['get'], url_path='stream-video/(?P<path>[^\s]+)')
     def stream_video(self, request, path=None):
