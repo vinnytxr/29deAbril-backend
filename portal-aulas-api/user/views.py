@@ -1,4 +1,5 @@
 from user.models import User, Role, Invitation
+from courses.models import Course
 from user.serializers import UserSerializer, RoleSerializer, InvitationSerializer
 from rest_framework import viewsets, views, exceptions, status
 from rest_framework.response import Response
@@ -243,6 +244,50 @@ class SendEmailAPIView(views.APIView):
       services.send_email(
         subject = 'Código professor (let-cursos)',
         message = f'Use o código "{code}" para se cadastrar como professor.' ,
+        to_email = userEmail
+      )
+      return Response({"message": "E-mail enviado com sucesso"}, status=status.HTTP_200_OK)
+    except:
+      return Response({"message": "Falha ao enviar e-mail"}, status=status.HTTP_400_BAD_REQUEST)
+    
+class ChangePasswordAPIView(views.APIView):
+  authentication_classes = (authentication.CustomUserAuthentication,)
+  
+  def put(self, request):
+      user = request.user
+      
+      if 'old_password' not in request.data:
+          return Response({'error': 'A senha atual é obrigatória.'}, status=status.HTTP_400_BAD_REQUEST)
+
+      if 'new_password' not in request.data:
+          return Response({'error': 'A nova senha é obrigatória.'}, status=status.HTTP_400_BAD_REQUEST)
+
+      if not user.check_password(request.data['old_password']):
+          return Response({'error': 'A senha atual fornecida é incorreta.'}, status=status.HTTP_400_BAD_REQUEST)
+
+      user.set_password(request.data['new_password'])
+      user.save()
+
+      return Response({'message': 'Senha alterada com sucesso.'}, status=status.HTTP_200_OK)
+    
+class GeneratePasswordAPIView(views.APIView):
+  
+  def post(self, request):
+    userEmail = request.data['email']
+    
+    try:
+      user = services.fetch_user_by_email(userEmail)
+      new_password = User.objects.make_random_password(length=6)
+
+      user.set_password(new_password)
+      user.save()
+    except:
+      return Response({"message": "Usuário não cadastrado"}, status=status.HTTP_400_BAD_REQUEST)
+      
+    try:
+      services.send_email(
+        subject = 'Senha temporária (let-cursos)',
+        message = f'Sua nova senha temporária é "{new_password}".' ,
         to_email = userEmail
       )
       return Response({"message": "E-mail enviado com sucesso"}, status=status.HTTP_200_OK)

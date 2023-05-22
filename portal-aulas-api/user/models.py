@@ -66,7 +66,8 @@ class User(TimeStampedModel, auth_models.AbstractUser):
   about = models.TextField("sobre mim", blank=True, null=True)
   birth = models.DateField("data de nascimento", null=True)
   role = models.ManyToManyField(Role, verbose_name="cargo")
-  courses = models.ManyToManyField('courses.Course')
+  courses = models.ManyToManyField('courses.Course', related_name='enrolled_users', blank=True)
+  favorite_courses = models.ManyToManyField('courses.Course', related_name='favorited_users', blank=True)
 
   username = None
 

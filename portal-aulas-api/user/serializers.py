@@ -19,7 +19,7 @@ class UserSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = User
-        fields = ('id', 'name', 'email', 'cpf', 'password', 'photo', 'about', 'contactLink', 'birth', 'role', 'enrolled_courses', 'created_courses', 'created', 'modified')
+        fields = ('id', 'name', 'email', 'cpf', 'password', 'photo', 'about', 'contactLink', 'birth', 'role', 'enrolled_courses', 'created_courses', 'favorite_courses', 'created', 'modified')
         extra_kwargs = {'password': {'required': True}}
 
     def create(self, validated_data):
@@ -38,6 +38,10 @@ class UserSerializer(serializers.ModelSerializer):
     def get_enrolled_courses(self, obj):
         enrolled_course = obj.courses.all()
         return CourseResumeSerializer(enrolled_course, many=True).data
+
+    def get_favorite_courses(self, obj):
+        favorite_courses = obj.favorite_courses.all()
+        return CourseResumeSerializer(favorite_courses, many=True).data
     
 class UserResumeSerializer(serializers.ModelSerializer):
     class Meta:
@@ -58,3 +62,10 @@ class InvitationSerializer(serializers.ModelSerializer):
 
         invitation = Invitation.objects.create(code=code, **validated_data)
         return invitation
+
+class ChangePasswordSerializer(serializers.ModelSerializer):
+    model = User
+
+    old_password = serializers.CharField(required=True)
+    new_password = serializers.CharField(required=True)
+        
