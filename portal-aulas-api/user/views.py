@@ -9,6 +9,7 @@ from rest_framework.permissions import AllowAny
 from rest_framework import mixins
 from . import services
 from rest_framework.settings import api_settings
+from django.core.validators import URLValidator
 
 class RoleViewSet(viewsets.ModelViewSet):
   queryset = Role.objects.all()
@@ -51,6 +52,10 @@ class UserViewSet(viewsets.ModelViewSet):
         
         # Salva a nova imagem
         instance.photo = request.FILES['photo']
+
+      if 'contactLink' in request.data:
+        validate = URLValidator()
+        validate(request.data["contactLink"])
 
       self.perform_update(serializer)
 
@@ -200,8 +205,25 @@ class UserAPIView(views.APIView):
   def get(self, request):
     user = request.user
     serializer = UserSerializer(user)
-    return Response(serializer.data)
 
+    info = serializer.data.copy()
+    
+    del info["password"]
+
+    return Response(info)
+
+class UserPerfil(viewsets.ModelViewSet):
+  queryset = User.objects.all()
+  serializer_class = UserSerializer
+
+  def retrieve(self, request, *args, **kwargs):
+    instance = self.get_object()
+    serializer = self.get_serializer(instance)
+    info = {"name": serializer.data["name"], "about": serializer.data["about"], "contactLink": serializer.data["contactLink"], "photo": serializer.data["photo"], "created": serializer.data["created"]}
+
+    return Response(info)
+
+    
 class LogoutAPIView(views.APIView):
   authentication_classes = (authentication.CustomUserAuthentication,)
   permission_classes = (permissions.CustomIsAuthenticated,)
