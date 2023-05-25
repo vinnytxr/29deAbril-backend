@@ -1,6 +1,5 @@
 from rest_framework import viewsets, status
 from rest_framework.response import Response
-from rest_framework import status
 from rest_framework.decorators import action
 from django.shortcuts import get_object_or_404
 
@@ -13,9 +12,11 @@ from django.db import models
 
 import requests
 from django.conf import settings
+from user import authentication, serializers
 
 class CourseViewSet(viewsets.ModelViewSet):
     queryset = Course.objects.all()
+    authentication_classes = (authentication.CustomUserAuthenticationWIthoutError,)
 
     # Sobreescrita para utilizar Serializadores diferêntes dependêndo do endpoint
     def get_serializer_class(self):
@@ -28,7 +29,17 @@ class CourseViewSet(viewsets.ModelViewSet):
     def retrieve(self, request, *args, **kwargs):
         instance = self.get_object()
         serializer = self.get_serializer(instance)
-        return Response(serializer.data)
+
+        if request.user and request.user.is_authenticated:
+            favorite_courses = request.user.favorite_courses.all()
+            favorited = instance in favorite_courses
+            data = serializer.data
+            data['favorited'] = favorited
+        else:
+            data = serializer.data
+
+        return Response(data)  
+            
     
     # [GET] /?page={int}&size={int}&professor={int}
     def list(self, request, *args, **kwargs):
@@ -171,7 +182,51 @@ class CourseViewSet(viewsets.ModelViewSet):
 
         serializer = self.get_serializer(course)
         return Response(serializer.data, status=status.HTTP_201_CREATED)
+    
+class FavoriteCourseViewSet(viewsets.ModelViewSet):
+    authentication_classes = (authentication.CustomUserAuthentication,)
+    serializer_class = CourseSerializerForGETS
+    
+    def get_queryset(self):
+        user = self.request.user
+        return user.favorite_courses.all()
+    
+    @action(detail=False, methods=['get'])
+    def list_favorite_courses(self, request):
+        user = request.user
+        favorite_courses = user.favorite_courses.all()
 
+        serializer = self.get_serializer(favorite_courses, many=True)
+        response = Response(serializer.data, status=status.HTTP_200_OK)
+
+        return response
+    
+    @action(detail=False, methods=['delete'], url_path='(?P<course_id>\d+)/remove')
+    def remove_favorite_course(self, request, course_id=None):
+        user = request.user
+        # course_id = kwargs.get('course_id')
+        
+        course = get_object_or_404(Course, pk=course_id)
+        
+        if course in user.favorite_courses.all():
+            user.favorite_courses.remove(course)
+            user.save()
+            
+            return Response(status=status.HTTP_200_OK)
+        
+        return Response(status=status.HTTP_204_NO_CONTENT)
+
+    @action(detail=False, methods=['post'], url_path='(?P<course_id>\d+)')
+    def student_favorite_courses(self, request, course_id=None):
+        user = request.user
+        course = get_object_or_404(Course, pk=course_id)
+        
+        user.favorite_courses.add(course)
+        user.save()
+
+        serializer = serializers.UserSerializer(user)
+        return Response(serializer.data, status=status.HTTP_201_CREATED)
+    
 class LearningViewSet(viewsets.ModelViewSet):
     queryset = Learning.objects.all()
     serializer_class = LearningSerializer

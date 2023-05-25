@@ -1,4 +1,5 @@
 from user.models import User, Role, Invitation
+from courses.models import Course
 from user.serializers import UserSerializer, RoleSerializer, InvitationSerializer
 from rest_framework import viewsets, views, exceptions, status
 from rest_framework.response import Response
@@ -8,6 +9,7 @@ from rest_framework.permissions import AllowAny
 from rest_framework import mixins
 from . import services
 from rest_framework.settings import api_settings
+from django.core.validators import URLValidator
 
 class RoleViewSet(viewsets.ModelViewSet):
   queryset = Role.objects.all()
@@ -50,6 +52,10 @@ class UserViewSet(viewsets.ModelViewSet):
         
         # Salva a nova imagem
         instance.photo = request.FILES['photo']
+
+      if 'contactLink' in request.data:
+        validate = URLValidator()
+        validate(request.data["contactLink"])
 
       self.perform_update(serializer)
 
@@ -199,8 +205,25 @@ class UserAPIView(views.APIView):
   def get(self, request):
     user = request.user
     serializer = UserSerializer(user)
-    return Response(serializer.data)
 
+    info = serializer.data.copy()
+    
+    del info["password"]
+
+    return Response(info)
+
+class UserPerfil(viewsets.ModelViewSet):
+  queryset = User.objects.all()
+  serializer_class = UserSerializer
+
+  def retrieve(self, request, *args, **kwargs):
+    instance = self.get_object()
+    serializer = self.get_serializer(instance)
+    info = {"name": serializer.data["name"], "about": serializer.data["about"], "contactLink": serializer.data["contactLink"], "photo": serializer.data["photo"], "created": serializer.data["created"]}
+
+    return Response(info)
+
+    
 class LogoutAPIView(views.APIView):
   authentication_classes = (authentication.CustomUserAuthentication,)
   permission_classes = (permissions.CustomIsAuthenticated,)
@@ -221,6 +244,50 @@ class SendEmailAPIView(views.APIView):
       services.send_email(
         subject = 'Código professor (let-cursos)',
         message = f'Use o código "{code}" para se cadastrar como professor.' ,
+        to_email = userEmail
+      )
+      return Response({"message": "E-mail enviado com sucesso"}, status=status.HTTP_200_OK)
+    except:
+      return Response({"message": "Falha ao enviar e-mail"}, status=status.HTTP_400_BAD_REQUEST)
+    
+class ChangePasswordAPIView(views.APIView):
+  authentication_classes = (authentication.CustomUserAuthentication,)
+  
+  def put(self, request):
+      user = request.user
+      
+      if 'old_password' not in request.data:
+          return Response({'error': 'A senha atual é obrigatória.'}, status=status.HTTP_400_BAD_REQUEST)
+
+      if 'new_password' not in request.data:
+          return Response({'error': 'A nova senha é obrigatória.'}, status=status.HTTP_400_BAD_REQUEST)
+
+      if not user.check_password(request.data['old_password']):
+          return Response({'error': 'A senha atual fornecida é incorreta.'}, status=status.HTTP_400_BAD_REQUEST)
+
+      user.set_password(request.data['new_password'])
+      user.save()
+
+      return Response({'message': 'Senha alterada com sucesso.'}, status=status.HTTP_200_OK)
+    
+class GeneratePasswordAPIView(views.APIView):
+  
+  def post(self, request):
+    userEmail = request.data['email']
+    
+    try:
+      user = services.fetch_user_by_email(userEmail)
+      new_password = User.objects.make_random_password(length=6)
+
+      user.set_password(new_password)
+      user.save()
+    except:
+      return Response({"message": "Usuário não cadastrado"}, status=status.HTTP_400_BAD_REQUEST)
+      
+    try:
+      services.send_email(
+        subject = 'Senha temporária (let-cursos)',
+        message = f'Sua nova senha temporária é "{new_password}".' ,
         to_email = userEmail
       )
       return Response({"message": "E-mail enviado com sucesso"}, status=status.HTTP_200_OK)
