@@ -29,3 +29,13 @@ class Learning(models.Model):
     id = models.BigAutoField(primary_key=True)
     name = models.CharField(max_length=128, blank=False)
     course = models.ForeignKey(Course, on_delete=models.CASCADE, related_name='learnings', null=False, blank=False)
+
+class Ratings(models.Model):
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    course = models.ForeignKey(Course, on_delete=models.CASCADE)
+    rating = models.IntegerField()
+
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(fields=['user', 'course'], name='unique_rating')
+        ]
