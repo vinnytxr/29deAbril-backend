@@ -34,7 +34,7 @@ class CourseSerializerForPOSTS(serializers.ModelSerializer):
 
     class Meta:
         model = Course
-        fields = ['id', 'title', 'description', 'banner', 'content', 'professor', 'learnings']
+        fields = ['id', 'title', 'description', 'banner', 'content', 'rating', 'count_ratings', 'professor', 'learnings']
         depth = 1
 
 class CourseResumeSerializer(serializers.ModelSerializer):
