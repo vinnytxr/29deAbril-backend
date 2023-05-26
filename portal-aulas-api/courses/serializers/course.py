@@ -29,8 +29,8 @@ class CourseSerializerForGETS(serializers.ModelSerializer):
 class CourseSerializerForPOSTS(serializers.ModelSerializer):
     professor = serializers.PrimaryKeyRelatedField(queryset=User.objects.all(), required=True)
 
-    def get_professor(self, obj):
-        return ProfessorResumeSerializer(obj.professor).data
+    # def get_professor(self, obj):
+    #     return ProfessorResumeSerializer(obj.professor).data
 
     class Meta:
         model = Course
