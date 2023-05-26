@@ -3,10 +3,15 @@ from rest_framework.response import Response
 from rest_framework.decorators import action
 from django.shortcuts import get_object_or_404
 
-from .models import Course, Learning
+from .models import Course, Learning, Ratings
 from .serializers.course import CourseSerializerForPOSTS, CourseSerializerForGETS
 from .serializers.learning import LearningSerializer
+from .serializers.ratings import RatingsSerializer
 from user.models import User, ROLES
+from django.db import models
+
+import requests
+from django.conf import settings
 from user import authentication, serializers
 
 class CourseViewSet(viewsets.ModelViewSet):
@@ -113,12 +118,18 @@ class CourseViewSet(viewsets.ModelViewSet):
         headers = self.get_success_headers(serializer.data)
         return Response(serializer.data, status=status.HTTP_201_CREATED, headers=headers)
 
+    def calculate_rating_mean(self, course_id):
+        rating_sum = Ratings.objects.filter(course_id=course_id).aggregate(total_rating_sum=models.Sum('rating'))['total_rating_sum']
+        return rating_sum
+
     # [UPDATE] /<id> 
     # body: multipart/form-data
     def update(self, request, *args, **kwargs):
         instance = self.get_object()
-        serializer = self.get_serializer(instance, data=request.data, partial=True)
-        serializer.is_valid(raise_exception=True)
+
+        new_data = dict(request.data)
+
+        # print(new_data)
 
         # Verifica se há uma nova imagem na requisição
         if 'banner' in request.FILES:
@@ -126,6 +137,23 @@ class CourseViewSet(viewsets.ModelViewSet):
             instance.banner.delete(save=False)
             # Salva a nova imagem
             instance.banner = request.FILES['banner']
+        
+        if 'rating' in request.data:
+            if 'count_ratings' in request.data:
+                new_data["count_ratings"] = instance.count_ratings + 1
+            else:
+                new_data["count_ratings"] = instance.count_ratings
+
+            # print(new_data["count_ratings"])
+            sum_rating = self.calculate_rating_mean(instance.id)
+            new_mean = sum_rating / int(new_data["count_ratings"])
+            # print(new_mean)
+            new_data["rating"] = round(new_mean, 1)
+
+        # print(new_data)
+        
+        serializer = self.get_serializer(instance, data=new_data, partial=True)
+        serializer.is_valid(raise_exception=True)
 
         self.perform_update(serializer)
 
@@ -203,3 +231,53 @@ class LearningViewSet(viewsets.ModelViewSet):
     queryset = Learning.objects.all()
     serializer_class = LearningSerializer
 
+class RatingsViewSet(viewsets.ModelViewSet):
+    queryset = Ratings.objects.all()
+    serializer_class = RatingsSerializer
+
+    def create(self, request, *args, **kwargs):
+        serializer = RatingsSerializer(data=request.data)
+    
+        if serializer.is_valid():
+            try:
+                serializer.save()
+            except:
+                return Response({"message": "Could not create the rating. Check the ids."}, status=status.HTTP_400_BAD_REQUEST)
+
+            data = {
+                'count_ratings': 1, 
+                'rating': 1
+            }
+        
+            update_url_rating = f'{settings.BASE_URL}/courses/courses/{request.data["course"]}'
+            response = requests.put(update_url_rating, json=data)
+
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+    @action(detail=False, methods=['patch'], url_path='update-rating/(?P<course_id>\d+)/(?P<user_id>\d+)')
+    def update_rating(self, request, course_id=None, user_id=None):
+        instance = Ratings.objects.get(user=user_id, course_id=course_id)
+
+        serializer = self.get_serializer(instance, data=request.data, partial=True)
+        serializer.is_valid(raise_exception=True)
+
+        self.perform_update(serializer)
+
+        data = {
+                'rating': 1
+            }
+        
+        update_url_rating = f'{settings.BASE_URL}/courses/courses/{course_id}'
+        response = requests.put(update_url_rating, json=data)
+
+
+        return Response(serializer.data)
+
+    @action(detail=False, methods=['get'], url_path='check-rating/(?P<course_id>\d+)/(?P<user_id>\d+)')
+    def check_rating(self, request, course_id=None, user_id=None):
+        try:
+            instance = Ratings.objects.get(user=user_id, course_id=course_id)
+            return Response({"result": 1}, status=status.HTTP_200_OK)
+        except:
+            return Response({"result": 0}, status=status.HTTP_200_OK)
