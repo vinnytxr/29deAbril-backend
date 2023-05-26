@@ -8,6 +8,7 @@ from user.views import (
     LogoutAPIView,
     InvitationViewSet,
     SendEmailAPIView,
+    UserPerfil,
     ChangePasswordAPIView,
     GeneratePasswordAPIView
 )
@@ -19,6 +20,7 @@ router = DefaultRouter()
 router.register(r'user', UserViewSet)
 router.register(r'role', RoleViewSet)
 router.register(r'invitation', InvitationViewSet)
+router.register(r'perfil', UserPerfil)
 
 urlpatterns = [
     path('', include(router.urls)),

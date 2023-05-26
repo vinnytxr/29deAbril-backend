@@ -20,3 +20,19 @@ class CustomUserAuthentication(authentication.BaseAuthentication):
         user = models.User.objects.filter(id=payload["id"]).first()
 
         return (user, None)
+
+class CustomUserAuthenticationWIthoutError(authentication.BaseAuthentication):
+     def authenticate(self, request):
+        token = request.headers.get('jwt')
+
+        if token is None:
+            return None  # Retorna None se o token não estiver presente
+
+        try:
+            payload = jwt.decode(token, settings.JWT_SECRET, algorithms=["HS256"])
+            user = models.User.objects.filter(id=payload["id"]).first()
+            return (user, None)
+        except jwt.ExpiredSignatureError:
+            return None, {"message": "Token de autenticação expirado"}
+        except jwt.InvalidTokenError:
+            return None, {"message": "Token de autenticação inválido"}

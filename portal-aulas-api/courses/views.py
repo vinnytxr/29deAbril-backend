@@ -11,6 +11,7 @@ from user import authentication, serializers
 
 class CourseViewSet(viewsets.ModelViewSet):
     queryset = Course.objects.all()
+    authentication_classes = (authentication.CustomUserAuthenticationWIthoutError,)
 
     # Sobreescrita para utilizar Serializadores diferêntes dependêndo do endpoint
     def get_serializer_class(self):
@@ -23,7 +24,17 @@ class CourseViewSet(viewsets.ModelViewSet):
     def retrieve(self, request, *args, **kwargs):
         instance = self.get_object()
         serializer = self.get_serializer(instance)
-        return Response(serializer.data)
+
+        if request.user and request.user.is_authenticated:
+            favorite_courses = request.user.favorite_courses.all()
+            favorited = instance in favorite_courses
+            data = serializer.data
+            data['favorited'] = favorited
+        else:
+            data = serializer.data
+
+        return Response(data)  
+            
     
     # [GET] /?page={int}&size={int}&professor={int}
     def list(self, request, *args, **kwargs):
