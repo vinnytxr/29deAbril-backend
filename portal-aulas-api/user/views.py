@@ -20,9 +20,6 @@ class UserViewSet(viewsets.ModelViewSet):
   serializer_class = UserSerializer
 
   def create(self, request, *args, **kwargs):
-        if not services.validate_age(request.data['birth']):
-          return Response({'message': 'User is too young'}, status=status.HTTP_400_BAD_REQUEST)
-
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         self.perform_create(serializer)
