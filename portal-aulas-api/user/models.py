@@ -59,8 +59,7 @@ def get_file_path(instance, filename):
 class User(TimeStampedModel, auth_models.AbstractUser):
   name = models.CharField("nome", max_length=120)
   email = models.EmailField("email", max_length=120, unique=True)
-  # cpf = BRCPFField("CPF", unique=True, null=True)
-  cpf = models.CharField("CPF", null=True, max_length=11)
+  cpf = BRCPFField("CPF", unique=True, null=True)
   photo = models.FileField("foto", upload_to=get_file_path, null=True)
   contactLink = models.URLField(max_length=200, null=True)
   about = models.TextField("sobre mim", blank=True, null=True)
