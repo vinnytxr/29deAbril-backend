@@ -20,9 +20,6 @@ class UserViewSet(viewsets.ModelViewSet):
   serializer_class = UserSerializer
 
   def create(self, request, *args, **kwargs):
-        if not services.validate_age(request.data['birth']):
-          return Response({'message': 'User is too young'}, status=status.HTTP_400_BAD_REQUEST)
-
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         self.perform_create(serializer)
@@ -185,10 +182,10 @@ class LoginAPIView(views.APIView):
     user = services.fetch_user_by_email(email=email)
 
     if user is None:
-      return Response({'message': 'Invalid credentials'}, status=status.HTTP_400_BAD_REQUEST)
+      return Response({'error': 'Credenciais inválidas.'}, status=status.HTTP_400_BAD_REQUEST)
 
     if not user.check_password(raw_password=password):
-      return Response({'message': 'Invalid credentials'}, status=status.HTTP_400_BAD_REQUEST)
+      return Response({'error': 'Credenciais inválidas.'}, status=status.HTTP_400_BAD_REQUEST)
 
     token = services.create_token(user_id=user.id)
 
@@ -282,7 +279,7 @@ class GeneratePasswordAPIView(views.APIView):
       user.set_password(new_password)
       user.save()
     except:
-      return Response({"message": "Usuário não cadastrado"}, status=status.HTTP_400_BAD_REQUEST)
+      return Response({"error": "Usuário não cadastrado."}, status=status.HTTP_400_BAD_REQUEST)
       
     try:
       services.send_email(
@@ -290,6 +287,6 @@ class GeneratePasswordAPIView(views.APIView):
         message = f'Sua nova senha temporária é "{new_password}".' ,
         to_email = userEmail
       )
-      return Response({"message": "E-mail enviado com sucesso"}, status=status.HTTP_200_OK)
+      return Response({"message": "E-mail enviado com sucesso."}, status=status.HTTP_200_OK)
     except:
-      return Response({"message": "Falha ao enviar e-mail"}, status=status.HTTP_400_BAD_REQUEST)
+      return Response({"error": "Falha ao enviar e-mail."}, status=status.HTTP_400_BAD_REQUEST)
