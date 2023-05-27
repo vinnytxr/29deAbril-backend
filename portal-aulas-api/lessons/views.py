@@ -119,6 +119,13 @@ class LessonViewSet(viewsets.ModelViewSet):
         serializer = self.get_serializer(instance, data=request.data, partial=True)
         serializer.is_valid(raise_exception=True)
 
+        use_banner_from_frame_video = False
+
+        if 'useframe' in request.data:
+            use_banner_from_frame_video = True if int(request.data['useframe']) == 1 else False
+
+        print('userframe: ', use_banner_from_frame_video)
+
         # Verifica se há uma nova imagem na requisição
         if 'banner' in request.FILES:
             # Exclui a imagem antiga
@@ -136,7 +143,8 @@ class LessonViewSet(viewsets.ModelViewSet):
 
         lesson = serializer.instance
 
-        if 'banner' not in request.data and 'video' in request.data and lesson.video is not None:
+        # if 'banner' not in request.data and 'video' in request.data and lesson.video is not None:
+        if use_banner_from_frame_video and lesson.video is not None:
             # Access the 'banner' attribute of the saved object
             video_partial_relative_path = lesson.video.url
             if len(video_partial_relative_path) > 0 and video_partial_relative_path[0] == '/':

@@ -74,7 +74,7 @@ class UserSerializer(serializers.ModelSerializer):
 
                     raise serializers.ValidationError({'error': f"'{field_name_form}' inválido."}, code='invalid')
 
-        validated_data = super().to_internal_value(data)
+        validated_data = super().to_internal_value(data) 
 
         return validated_data
 
