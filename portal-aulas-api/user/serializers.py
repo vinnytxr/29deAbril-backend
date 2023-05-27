@@ -69,10 +69,10 @@ class UserSerializer(serializers.ModelSerializer):
 
                     if field_name == "email":
                         if error_message.find("exists") != -1:
-                            raise serializers.ValidationError({'error': f"'{field_name_form}' já cadastrado"}, code='invalid')
-                        raise serializers.ValidationError({'error': f"'{field_name_form}' inválido(a)"}, code='invalid')
+                            raise serializers.ValidationError({'error': f"'{field_name_form}' já cadastrado."}, code='invalid')
+                        raise serializers.ValidationError({'error': f"'{field_name_form}' inválido."}, code='invalid')
 
-                    raise serializers.ValidationError({'error': f"'{field_name_form}' inválido(a)"}, code='invalid')
+                    raise serializers.ValidationError({'error': f"'{field_name_form}' inválido."}, code='invalid')
 
         validated_data = super().to_internal_value(data)
 
