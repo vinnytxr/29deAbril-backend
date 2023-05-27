@@ -50,6 +50,8 @@ IMAGES_BASE_URL = "{}/media/images".format(BASE_DIR)
 MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 MEDIA_URL = '/media/'
 
+BASE_URL = "http://localhost:8080"
+
 # Application definition
  
 INSTALLED_APPS = [
