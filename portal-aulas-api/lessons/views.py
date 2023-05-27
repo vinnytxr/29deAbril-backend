@@ -3,6 +3,7 @@ from rest_framework.response import Response
 from rest_framework.decorators import action
 from django.shortcuts import get_object_or_404
 from .models import Lesson
+from user.models import User
 from .serializers import LessonSerializer
 from django.http import FileResponse, Http404, JsonResponse
 from django.conf import settings
@@ -118,6 +119,13 @@ class LessonViewSet(viewsets.ModelViewSet):
         serializer = self.get_serializer(instance, data=request.data, partial=True)
         serializer.is_valid(raise_exception=True)
 
+        use_banner_from_frame_video = False
+
+        if 'useframe' in request.data:
+            use_banner_from_frame_video = True if int(request.data['useframe']) == 1 else False
+
+        print('userframe: ', use_banner_from_frame_video)
+
         # Verifica se há uma nova imagem na requisição
         if 'banner' in request.FILES:
             # Exclui a imagem antiga
@@ -135,7 +143,8 @@ class LessonViewSet(viewsets.ModelViewSet):
 
         lesson = serializer.instance
 
-        if 'banner' not in request.data and 'video' in request.data and lesson.video is not None:
+        # if 'banner' not in request.data and 'video' in request.data and lesson.video is not None:
+        if use_banner_from_frame_video and lesson.video is not None:
             # Access the 'banner' attribute of the saved object
             video_partial_relative_path = lesson.video.url
             if len(video_partial_relative_path) > 0 and video_partial_relative_path[0] == '/':
@@ -178,7 +187,18 @@ class LessonViewSet(viewsets.ModelViewSet):
     # body: multipart/form-data
     def partial_update(self, request, *args, **kwargs):
         return self.update(request, *args, **kwargs)
+    
+    @action(detail=False, methods=['post'], url_path='complete-course/(?P<lesson_id>\d+)/(?P<student_id>\d+)')
+    def complete_course(self, request, lesson_id=None, student_id=None):
+        lesson = get_object_or_404(Lesson, pk=lesson_id)
+        student = get_object_or_404(User, pk=student_id)
 
+        lesson.users_who_completed.add(student)
+        lesson.save()
+
+        serializer = self.get_serializer(lesson)
+        return Response(serializer.data, status=status.HTTP_201_CREATED)
+    
     @action(detail=False, methods=['get'], url_path='stream-video/(?P<path>[^\s]+)')
     def stream_video(self, request, path=None):
 
