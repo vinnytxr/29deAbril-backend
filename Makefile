@@ -33,7 +33,15 @@ db:
 	docker-compose up db
 
 makemigrate:
-	docker exec -it portal-aulas-api sh -c "python /app/manage.py makemigrations && python /app/manage.py migrate"
+	docker exec -it portal-aulas-api sh -c "echo yes | python /app/manage.py makemigrations && python /app/manage.py migrate"
 
 makemigrate_merge:
-	docker exec -it portal-aulas-api sh -c "python /app/manage.py makemigrations --merge && python /app/manage.py migrate"
+	docker exec -it portal-aulas-api sh -c "echo yes | python /app/manage.py makemigrations --merge && python /app/manage.py migrate"
+
+local_makemigrate_merge:
+	python -m venv env-migrate
+	. env-migrate/bin/activate && \
+	pip install -r portal-aulas-api/requirements.txt && \
+	echo yes | python portal-aulas-api/manage.py makemigrations --merge && \
+	deactivate && \
+	rm -rf env-migrate
