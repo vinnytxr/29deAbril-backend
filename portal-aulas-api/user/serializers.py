@@ -6,6 +6,13 @@ from . import services
 from rest_framework.exceptions import ValidationError
 from rest_framework.response import Response
 from rest_framework import status
+from collections.abc import Mapping
+from collections import OrderedDict, defaultdict
+from rest_framework.fields import get_error_detail, set_value
+from django.core.exceptions import ValidationError as DjangoValidationError
+from rest_framework.fields import (  # NOQA # isort:skip
+    CreateOnlyDefault, CurrentUserDefault, SkipField, empty
+)
 
 from rest_framework.exceptions import APIException
 
@@ -23,66 +30,71 @@ class UserSerializer(serializers.ModelSerializer):
         model = User
         fields = ('id', 'name', 'email', 'password', 'photo', 'about', 'contactLink', 'birth', 'cpf', 'role', 'enrolled_courses', 'created_courses', 'favorite_courses', 'created', 'modified')
         extra_kwargs = {'password': {'required': True}}
-    
-    def to_internal_value(self, data):
         
-        for field_name, field in self.fields.items():
-            if field_name == "id":
-                continue
+    def to_internal_value(self, data):
+        if not isinstance(data, Mapping):
+            message = self.error_messages['invalid'].format(
+                datatype=type(data).__name__
+            )
+            print(message)
+            raise ValidationError({
+                api_settings.NON_FIELD_ERRORS_KEY: [message]
+            }, code='invalid')
 
-            if field_name in ["name", "password"]:
-                value = data.get(field_name)
-                if value == "":
-                    raise serializers.ValidationError({'error': f"Campo '{field_name}' é obrigatório"}, code='invalid')
+        ret = OrderedDict()
+        fields = self._writable_fields
 
-            if field_name in ["email", "cpf", "birth"]:
-                field_name_form = ""
+        for field in fields:
+            real_field_name = ""
 
-                if field_name == "email":
-                    field_name_form = "E-mail"
+            if field.field_name == "name":
+                real_field_name = "Nome"
+            elif field.field_name == "password":
+                real_field_name = "Senha"
+            elif field.field_name == "email":
+                real_field_name = "E-mail"
+            elif field.field_name == "birth":
+                real_field_name = "Data de nascimento"
+            elif field.field_name == "cpf":
+                real_field_name = "CPF"
+            elif field.field_name == "role":
+                real_field_name = "Cargo"
 
-                if field_name == "cpf":
-                    field_name_form = "CPF"
-                
-                if field_name == "birth":
-                    field_name_form = "Data de nascimento"
+            validate_method = getattr(self, 'validate_' + field.field_name, None)
+            
+            primitive_value = field.get_value(data)
 
-                value = data.get(field_name)
+            try:
+                validated_value = field.run_validation(primitive_value)
+                if validate_method is not None:
+                    validated_value = validate_method(validated_value)
+            except ValidationError as exc:
+                if exc.detail[0].find("blank") != -1 or exc.detail[0].find("required") != -1:
+                    raise serializers.ValidationError({'error': f"Campo '{real_field_name}' é obrigatório"}, code='invalid')
+                elif exc.detail[0].find("valid") != -1:
+                    raise serializers.ValidationError({'error': f"'{real_field_name}' inválido"}, code='invalid')
+                elif exc.detail[0].find("already exists") != -1:
+                    raise serializers.ValidationError({'error': f"'{real_field_name}' já utilizado"}, code='invalid')
+                elif exc.detail[0].find("Date has wrong format") != -1:
+                    raise serializers.ValidationError({'error': f"'{real_field_name}' inválida"}, code='invalid')
+                elif exc.detail[0].find("at least 4") != -1:
+                    raise serializers.ValidationError({'error': f"'{real_field_name}' precisa ter mais do que 3 caracteres"}, code='invalid')
+                elif exc.detail[0].find("7 anos") != -1:
+                    raise serializers.ValidationError({'error': "Usuário precisa ter 7 anos ou mais para realizar o cadastro"}, code='invalid')
+                else:
+                    raise serializers.ValidationError({'error': f"Campo: '{field.field_name}' Erro: {exc.detail[0]}"}, code='invalid')
+            except SkipField:
+                pass
+            else:
+                set_value(ret, field.source_attrs, validated_value)
 
-                if value == "":
-                    raise serializers.ValidationError({'error': f"Campo '{field_name_form}' é obrigatório(a)"}, code='invalid')
-
-                try:
-                    field.run_validation(value)
-
-                    if field_name == "birth":
-                        result = services.validate_age(value)
-
-                        if not result:
-                            raise serializers.ValidationError("", code='invalid')
-                            
-                except serializers.ValidationError as e:
-                    if field_name == "birth":
-                        raise serializers.ValidationError({'error': 'Idade mínima de 7 anos'}, code='invalid')
-
-                    error_message = e.detail[0]
-
-                    if field_name == "email":
-                        if error_message.find("exists") != -1:
-                            raise serializers.ValidationError({'error': f"'{field_name_form}' já cadastrado"}, code='invalid')
-                        raise serializers.ValidationError({'error': f"'{field_name_form}' inválido(a)"}, code='invalid')
-
-                    raise serializers.ValidationError({'error': f"'{field_name_form}' inválido(a)"}, code='invalid')
-
-        validated_data = super().to_internal_value(data)
-
-        return validated_data
+        return ret
 
     def create(self, validated_data):
         password = validated_data.pop('password')
         role_ids = validated_data.pop('role')
         if not role_ids:
-            raise serializers.ValidationError({'Cargo': 'Usuário precisa ter um cargo.'})
+            raise serializers.ValidationError({'error': 'Usuário precisa ter um cargo'})
         user = User.objects.create_user(password=password, **validated_data)
         user.role.set(role_ids)
         return user
