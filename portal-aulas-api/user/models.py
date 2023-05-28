@@ -4,6 +4,9 @@ from enum import Enum
 from localflavor.br.models import BRCPFField
 import os
 import uuid
+from django.core.validators import MinLengthValidator
+import datetime
+from django.core.exceptions import ValidationError
 
 from django_extensions.db.models import (
     TimeStampedModel 
@@ -57,13 +60,22 @@ def get_file_path(instance, filename):
     return os.path.join('images/users', filename)
 
 class User(TimeStampedModel, auth_models.AbstractUser):
+  def validate_age(birth_date):
+    today = datetime.date.today()
+
+    birth_obj = datetime.datetime.strptime(str(birth_date), '%Y-%m-%d')
+
+    if (today.year - birth_obj.year) < 7:
+        raise ValidationError("Usuário precisa ter 7 anos ou mais para realizar o cadastro")
+
   name = models.CharField("nome", max_length=120)
   email = models.EmailField("email", max_length=120, unique=True)
+  password = models.CharField(max_length=128, verbose_name='password', validators=[MinLengthValidator(4)])
   cpf = BRCPFField("CPF", unique=True, null=True)
   photo = models.FileField("foto", upload_to=get_file_path, null=True)
   contactLink = models.URLField(max_length=200, null=True)
   about = models.TextField("sobre mim", blank=True, null=True)
-  birth = models.DateField("data de nascimento", null=True)
+  birth = models.DateField("data de nascimento", null=True, validators=[validate_age])
   role = models.ManyToManyField(Role, verbose_name="cargo")
   courses = models.ManyToManyField('courses.Course', related_name='enrolled_users', blank=True)
   favorite_courses = models.ManyToManyField('courses.Course', related_name='favorited_users', blank=True)
@@ -74,7 +86,7 @@ class User(TimeStampedModel, auth_models.AbstractUser):
 
   USERNAME_FIELD = "email"
   REQUIRED_FIELDS = ["name"]
-  
+
 
   def __str__(self):
         return self.name
