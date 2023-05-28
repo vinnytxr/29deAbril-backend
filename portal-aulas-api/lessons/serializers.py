@@ -1,6 +1,9 @@
 from django.shortcuts import get_object_or_404
 from rest_framework import serializers
 from .models import Lesson
+# from courses.serializers.course import CourseResumeSerializer
+
+# from user.serializers import UserResumeSerializer
 
 class LessonSerializer(serializers.ModelSerializer):
 
@@ -11,9 +14,11 @@ class LessonSerializer(serializers.ModelSerializer):
 class LessonWithPrevNextSerializer(serializers.ModelSerializer):
     prev = serializers.SerializerMethodField('get_prev_lesson')
     next = serializers.SerializerMethodField('get_next_lesson')
+    professor = serializers.SerializerMethodField('get_professor_from_course')
     class Meta:
         model = Lesson
         fields = '__all__'
+        depth = 0
     
     def get_prev_lesson(self, obj):
         prev_lesson = Lesson.objects.filter(course=obj.course, id__lt=obj.id).order_by('-id').first()
@@ -26,6 +31,10 @@ class LessonWithPrevNextSerializer(serializers.ModelSerializer):
         if next_lesson:
             return LessonResumeSerializer(next_lesson).data
         return None
+    
+    def get_professor_from_course(self, obj):
+        return obj.course.professor.id
+        
 
 
 class LessonResumeSerializer(serializers.ModelSerializer):
