@@ -7,15 +7,15 @@ from . import models
 class CustomUserAuthentication(authentication.BaseAuthentication):
 
     def authenticate(self, request):
-        token = request.headers['jwt']
+        token = request.headers.get('jwt')
 
         if not token:
-            raise exceptions.AuthenticationFailed({"message": "Authenticate::User not authenticated"})
+            raise exceptions.AuthenticationFailed({"message": "Usuário não autenticado"})
 
         try:
             payload = jwt.decode(token, settings.JWT_SECRET, algorithms=["HS256"])
         except:
-            raise exceptions.AuthenticationFailed({"message": "User not authenticated"})
+            raise exceptions.AuthenticationFailed({"message": "Usuário não autenticado"})
 
         user = models.User.objects.filter(id=payload["id"]).first()
 
