@@ -129,7 +129,7 @@ class CourseViewSet(viewsets.ModelViewSet):
 
         new_data = dict(request.data)
 
-        # print(new_data)
+        use_new_data = 0
 
         # Verifica se há uma nova imagem na requisição
         if 'banner' in request.FILES:
@@ -138,21 +138,23 @@ class CourseViewSet(viewsets.ModelViewSet):
             # Salva a nova imagem
             instance.banner = request.FILES['banner']
         
-        if 'rating' in request.data:
+        if 'rating' in request.data and 'id' not in request.data:
+            use_new_data = 1
+
             if 'count_ratings' in request.data:
                 new_data["count_ratings"] = instance.count_ratings + 1
             else:
                 new_data["count_ratings"] = instance.count_ratings
 
-            # print(new_data["count_ratings"])
             sum_rating = self.calculate_rating_mean(instance.id)
             new_mean = sum_rating / int(new_data["count_ratings"])
-            # print(new_mean)
             new_data["rating"] = round(new_mean, 1)
-
-        # print(new_data)
         
-        serializer = self.get_serializer(instance, data=new_data, partial=True)
+        if use_new_data:
+            serializer = self.get_serializer(instance, data=new_data, partial=True)
+        else:
+            serializer = self.get_serializer(instance, data=request.data, partial=True)
+
         serializer.is_valid(raise_exception=True)
 
         self.perform_update(serializer)
