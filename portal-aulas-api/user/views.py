@@ -11,6 +11,9 @@ from . import services
 from rest_framework.settings import api_settings
 from django.core.validators import URLValidator
 
+import requests
+from django.conf import settings
+
 class RoleViewSet(viewsets.ModelViewSet):
   queryset = Role.objects.all()
   serializer_class = RoleSerializer
@@ -70,25 +73,6 @@ class UserViewSet(viewsets.ModelViewSet):
       self.perform_destroy(instance)
       return Response(status=status.HTTP_204_NO_CONTENT)
 
-  def update_role(self, id_user):
-    user = services.fetch_user_by_id(id_user)
-    
-    list_roles = [val for val in user.role.all()]
-
-    list_roles.append(services.fetch_id_role_by_name("PROFESSOR"))
-
-    updated_user = user
-    updated_user.role.set(list_roles)
-
-    _serializer = self.serializer_class(instance=user,
-                                        data=updated_user,
-                                        partial=True) 
-    if _serializer.is_valid():
-        _serializer.save()
-        return Response(data=_serializer.data, status=status.HTTP_201_CREATED) 
-    else:
-        return Response(data=_serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-
 class InvitationViewSet(mixins.CreateModelMixin, mixins.ListModelMixin, 
                                 mixins.UpdateModelMixin, mixins.DestroyModelMixin,
                                 viewsets.GenericViewSet):
@@ -144,9 +128,17 @@ class InvitationViewSet(mixins.CreateModelMixin, mixins.ListModelMixin,
     
     try:
       self.perform_update(serializer)
-      UserViewSet.update_role(UserViewSet, partial)
     except:
       return Response({'message': 'You are already accepted as a professor'}, status=status.HTTP_400_BAD_REQUEST)
+
+    roles_list = professor.data["role"]
+
+    roles_list.append(2)
+
+    data = {"role": roles_list}
+        
+    update_url_role = f'{settings.BASE_URL}/user/{partial}/'
+    response = requests.put(update_url_role, json=data)
 
     if getattr(instance, '_prefetched_objects_cache', None):
         # If 'prefetch_related' has been applied to a queryset, we need to
