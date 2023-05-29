@@ -102,10 +102,7 @@ class InvitationViewSet(mixins.CreateModelMixin, mixins.ListModelMixin,
   def get_object(self):
       queryset = self.filter_queryset(self.get_queryset())
 
-      try:
-        id_invitation = services.fetch_invitation_by_code(self.request.data["code"])
-      except:
-        return Response({'message': 'Invitation could not be fetched'}, status=status.HTTP_400_BAD_REQUEST)
+      id_invitation = services.fetch_invitation_by_code(self.request.data["code"])
 
       obj = queryset.get(pk=id_invitation)
       self.check_object_permissions(self.request, obj)
@@ -113,10 +110,13 @@ class InvitationViewSet(mixins.CreateModelMixin, mixins.ListModelMixin,
       return obj
 
   def put(self, request):
-    instance = self.get_object()
+    try:
+      instance = self.get_object()
+    except:
+        return Response({'error': 'Convite inválido'}, status=status.HTTP_400_BAD_REQUEST)
 
     if instance.professor:
-      return Response({'message': 'This invitation was already used'}, status=status.HTTP_400_BAD_REQUEST)
+      return Response({'error': 'Este convite já foi utilizado'}, status=status.HTTP_400_BAD_REQUEST)
 
     professor = UserAPIView.get(self, request)
     partial = professor.data["id"]
@@ -129,7 +129,7 @@ class InvitationViewSet(mixins.CreateModelMixin, mixins.ListModelMixin,
     try:
       self.perform_update(serializer)
     except:
-      return Response({'message': 'You are already accepted as a professor'}, status=status.HTTP_400_BAD_REQUEST)
+      return Response({'error': 'Você já foi aceito como um professor'}, status=status.HTTP_400_BAD_REQUEST)
 
     roles_list = professor.data["role"]
 
@@ -159,7 +159,7 @@ class InvitationViewSet(mixins.CreateModelMixin, mixins.ListModelMixin,
         try:
           self.perform_destroy(instance)
         except:
-          return Response({'message': 'Invitation could not be destroyed'}, status=status.HTTP_400_BAD_REQUEST)
+          return Response({'error': 'Convite não pode ser destruido'}, status=status.HTTP_400_BAD_REQUEST)
           
         return Response(status=status.HTTP_200_OK)
 
