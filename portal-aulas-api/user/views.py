@@ -1,6 +1,6 @@
-from user.models import User, Role, Invitation
+from user.models import User, Role, Invitation, Anotation
 from courses.models import Course
-from user.serializers import UserSerializer, RoleSerializer, InvitationSerializer
+from user.serializers import UserSerializer, RoleSerializer, InvitationSerializer, AnotationSerializer
 from rest_framework import viewsets, views, exceptions, status
 from rest_framework.response import Response
 from . import services, authentication, permissions
@@ -282,3 +282,10 @@ class GeneratePasswordAPIView(views.APIView):
       return Response({"message": "E-mail enviado com sucesso."}, status=status.HTTP_200_OK)
     except:
       return Response({"error": "Falha ao enviar e-mail."}, status=status.HTTP_400_BAD_REQUEST)
+    
+class AnotationViewSet(viewsets.ModelViewSet):
+  queryset = Anotation.objects.all()
+  serializer_class = AnotationSerializer
+
+  authentication_classes = (authentication.CustomUserAuthentication,)
+  permission_classes = (permissions.CustomIsAuthenticated,)
