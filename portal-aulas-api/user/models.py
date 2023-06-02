@@ -95,3 +95,8 @@ class User(TimeStampedModel, auth_models.AbstractUser):
 class Invitation(models.Model):
   code = models.CharField(max_length=256, null=False, blank=True)
   professor = models.OneToOneField(User, on_delete=models.CASCADE, null=True, blank=True)
+
+
+class Anotation(models.Model):
+   user = models.OneToOneField(User, on_delete=models.CASCADE)
+   anotations = models.TextField("Notas")

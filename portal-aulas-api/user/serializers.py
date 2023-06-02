@@ -1,4 +1,4 @@
-from user.models import User, Role, Invitation
+from user.models import User, Role, Invitation, Anotation
 from rest_framework import serializers
 from courses.models import Course
 from courses.serializers.course import CourseResumeSerializer
@@ -136,4 +136,11 @@ class ChangePasswordSerializer(serializers.ModelSerializer):
 
     old_password = serializers.CharField(required=True)
     new_password = serializers.CharField(required=True)
+
+class AnotationSerializer(serializers.ModelSerializer):
+    user = serializers.PrimaryKeyRelatedField(queryset=User.objects.all())
+
+    class Meta:
+        model = Anotation
+        fields = '__all__'
         
