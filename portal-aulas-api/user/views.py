@@ -13,6 +13,7 @@ from django.core.validators import URLValidator
 
 import requests
 from django.conf import settings
+from rest_framework.decorators import action
 
 class RoleViewSet(viewsets.ModelViewSet):
   queryset = Role.objects.all()
@@ -72,6 +73,13 @@ class UserViewSet(viewsets.ModelViewSet):
       instance.photo.delete(save=False) 
       self.perform_destroy(instance)
       return Response(status=status.HTTP_204_NO_CONTENT)
+  
+  @action(detail=False, methods=['get'], url_path='list-professors')
+  def list_professors(self, request):
+      professors = User.objects.filter(role__in=[2])
+
+      serializer = self.get_serializer(professors, many=True)
+      return Response(serializer.data, status=status.HTTP_200_OK)
 
 class InvitationViewSet(mixins.CreateModelMixin, mixins.ListModelMixin, 
                                 mixins.UpdateModelMixin, mixins.DestroyModelMixin,
