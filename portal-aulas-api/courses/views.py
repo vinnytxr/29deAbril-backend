@@ -244,7 +244,7 @@ class RatingsViewSet(viewsets.ModelViewSet):
             try:
                 serializer.save()
             except:
-                return Response({"message": "Could not create the rating. Check the ids."}, status=status.HTTP_400_BAD_REQUEST)
+                return Response({"error": "Usuário já postou uma avaliação do curso. Tente editá-la"}, status=status.HTTP_400_BAD_REQUEST)
 
             data = {
                 'count_ratings': 1, 
@@ -261,7 +261,19 @@ class RatingsViewSet(viewsets.ModelViewSet):
     def update_rating(self, request, course_id=None, user_id=None):
         instance = Ratings.objects.get(user=user_id, course_id=course_id)
 
-        serializer = self.get_serializer(instance, data=request.data, partial=True)
+        new_data = dict(request.data)
+
+        use_new_data = 0
+
+        if not instance.commentVisibility:
+            use_new_data = 1
+            del new_data['comment']
+        
+        if use_new_data:
+            serializer = self.get_serializer(instance, data=new_data, partial=True)
+        else:
+            serializer = self.get_serializer(instance, data=request.data, partial=True)
+
         serializer.is_valid(raise_exception=True)
 
         self.perform_update(serializer)
@@ -275,6 +287,22 @@ class RatingsViewSet(viewsets.ModelViewSet):
 
 
         return Response(serializer.data)
+    
+    @action(detail=False, methods=['patch'], url_path='update-visibility/(?P<course_id>\d+)/(?P<user_id>\d+)/(?P<professor_id>\d+)')
+    def update_visibility(self, request, course_id=None, user_id=None, professor_id=None):
+        try:
+            course = Course.objects.get(id=course_id, professor=professor_id)
+        except:
+            return Response({"error": "Permissão negada. Usuário não é professor do curso."}, status=status.HTTP_400_BAD_REQUEST)
+
+        instance = Ratings.objects.get(user=user_id, course_id=course_id)
+
+        serializer = self.get_serializer(instance, data=request.data, partial=True)
+        serializer.is_valid(raise_exception=True)
+
+        self.perform_update(serializer)
+
+        return Response(serializer.data)
 
     @action(detail=False, methods=['get'], url_path='check-rating/(?P<course_id>\d+)/(?P<user_id>\d+)')
     def check_rating(self, request, course_id=None, user_id=None):
@@ -283,3 +311,12 @@ class RatingsViewSet(viewsets.ModelViewSet):
             return Response({"result": 1}, status=status.HTTP_200_OK)
         except:
             return Response({"result": 0}, status=status.HTTP_200_OK)
+        
+    @action(detail=False, methods=['get'], url_path='list-ratings-course/(?P<course_id>\d+)')
+    def list_ratings(self, request, course_id=None):
+        list_ratings = Ratings.objects.filter(course=course_id)
+
+        serializer = self.get_serializer(list_ratings, many=True)
+        response = Response(serializer.data, status=status.HTTP_200_OK)
+
+        return response
