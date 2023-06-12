@@ -13,7 +13,7 @@ from django.core.validators import URLValidator
 
 import requests
 from django.conf import settings
-from rest_framework.decorators import action
+from rest_framework.decorators import action, permission_classes
 
 class RoleViewSet(viewsets.ModelViewSet):
   queryset = Role.objects.all()
@@ -80,6 +80,42 @@ class UserViewSet(viewsets.ModelViewSet):
 
       serializer = self.get_serializer(professors, many=True)
       return Response(serializer.data, status=status.HTTP_200_OK)
+  
+  @action(detail=False, methods=['patch'], url_path='prof-permission/(?P<professor_id>\d+)')
+  def prof_perm(self, request, professor_id=None):
+    professor = User.objects.get(id=professor_id)
+    acao = request.data["permission"]
+    
+    roles_objects = list(professor.role.all())
+    roles_list = [getattr(role, 'name') for role in roles_objects]
+
+    new_list = []
+
+    if acao:
+        if 'STUDENT' in roles_list:
+           new_list.append(1)
+        if 'PROFESSOR' not in roles_list:
+          new_list.append(2)
+        if 'ADMIN' in roles_list:
+          new_list.append(3)
+
+        data = {"role": new_list}
+    else:
+       if 'STUDENT' in roles_list:
+           new_list.append(1)
+       if 'PROFESSOR' in roles_list:
+          new_list.remove(2)
+       if 'ADMIN' in roles_list:
+          new_list.append(3)
+       
+       data = {"role": new_list}
+
+    partial = professor.id
+        
+    update_url_role = f'{settings.BASE_URL}/user/{partial}/'
+    response = requests.put(update_url_role, json=data)
+
+    return Response(response, status=status.HTTP_200_OK)
 
 class InvitationViewSet(mixins.CreateModelMixin, mixins.ListModelMixin, 
                                 mixins.UpdateModelMixin, mixins.DestroyModelMixin,
