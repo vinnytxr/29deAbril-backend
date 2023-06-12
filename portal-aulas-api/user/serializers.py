@@ -1,6 +1,8 @@
 from user.models import User, Role, Invitation
 from rest_framework import serializers
 from courses.models import Course
+from lessons.models import Lesson
+from lessons.serializers import LessonResumeSerializer, LessonSerializer
 from courses.serializers.course import CourseResumeSerializer
 from . import services
 from rest_framework.exceptions import ValidationError
@@ -105,7 +107,19 @@ class UserSerializer(serializers.ModelSerializer):
     
     def get_enrolled_courses(self, obj):
         enrolled_course = obj.courses.all()
-        return CourseResumeSerializer(enrolled_course, many=True).data
+        serialized_courses_resume = CourseResumeSerializer(enrolled_course, many=True).data
+
+        for serialized_course_resume in serialized_courses_resume:
+            total = 0
+            course_lessons_not_serialized = Lesson.objects.filter(course__id=serialized_course_resume["id"])
+            course_lessons = LessonSerializer(course_lessons_not_serialized, many=True).data
+            course_lessons_that_user_completed = [lesson for lesson in course_lessons if obj.id in lesson["users_who_completed"]]
+
+            serialized_course_resume["total_lessons"] = len(course_lessons)
+            serialized_course_resume["lessons_completed"] = len(course_lessons_that_user_completed)
+            serialized_course_resume["completed"] = (len(course_lessons) == len(course_lessons_that_user_completed)) and len(course_lessons) != 0
+
+        return serialized_courses_resume
 
     def get_favorite_courses(self, obj):
         favorite_courses = obj.favorite_courses.all()
