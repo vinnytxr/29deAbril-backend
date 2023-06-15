@@ -10,10 +10,11 @@ from rest_framework import mixins
 from . import services
 from rest_framework.settings import api_settings
 from django.core.validators import URLValidator
+import json
 
 import requests
 from django.conf import settings
-from rest_framework.decorators import action, permission_classes
+from rest_framework.decorators import action, api_view, permission_classes
 
 class RoleViewSet(viewsets.ModelViewSet):
   queryset = Role.objects.all()
@@ -74,14 +75,14 @@ class UserViewSet(viewsets.ModelViewSet):
       self.perform_destroy(instance)
       return Response(status=status.HTTP_204_NO_CONTENT)
   
-  @action(detail=False, methods=['get'], url_path='list-professors')
+  @action(detail=False, methods=['get'], url_path='list-professors', authentication_classes = [authentication.CustomUserAuthentication], permission_classes=[CustomIsAdmin])
   def list_professors(self, request):
       professors = User.objects.filter(role__in=[2])
 
       serializer = self.get_serializer(professors, many=True)
       return Response(serializer.data, status=status.HTTP_200_OK)
   
-  @action(detail=False, methods=['patch'], url_path='prof-permission/(?P<professor_id>\d+)')
+  @action(detail=False, methods=['patch'], url_path='prof-permission/(?P<professor_id>\d+)', authentication_classes = [authentication.CustomUserAuthentication], permission_classes=[CustomIsAdmin])
   def prof_perm(self, request, professor_id=None):
     professor = User.objects.get(id=professor_id)
     acao = request.data["permission"]
@@ -103,8 +104,6 @@ class UserViewSet(viewsets.ModelViewSet):
     else:
        if 'STUDENT' in roles_list:
            new_list.append(1)
-       if 'PROFESSOR' in roles_list:
-          new_list.remove(2)
        if 'ADMIN' in roles_list:
           new_list.append(3)
        
@@ -115,7 +114,9 @@ class UserViewSet(viewsets.ModelViewSet):
     update_url_role = f'{settings.BASE_URL}/user/{partial}/'
     response = requests.put(update_url_role, json=data)
 
-    return Response(response, status=status.HTTP_200_OK)
+    response_json = json.loads(response.text)
+
+    return Response(response_json, status=status.HTTP_200_OK, content_type='application/json')
 
 class InvitationViewSet(mixins.CreateModelMixin, mixins.ListModelMixin, 
                                 mixins.UpdateModelMixin, mixins.DestroyModelMixin,
