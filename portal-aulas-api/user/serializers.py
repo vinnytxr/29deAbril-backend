@@ -124,7 +124,8 @@ class UserSerializer(serializers.ModelSerializer):
 
             completed_percentage = 0
             if qtd_total_lessons > 0 and qtd_lessons_completed > 0:
-                completed_percentage = int(qtd_lessons_completed/qtd_total_lessons) * 100
+                completed_percentage = int((qtd_lessons_completed/qtd_total_lessons) * 100) 
+            print(qtd_total_lessons > 0 and qtd_lessons_completed > 0)
 
             serialized_course_resume["completed_percentage"] = completed_percentage
 
