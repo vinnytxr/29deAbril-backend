@@ -115,9 +115,18 @@ class UserSerializer(serializers.ModelSerializer):
             course_lessons = LessonSerializer(course_lessons_not_serialized, many=True).data
             course_lessons_that_user_completed = [lesson for lesson in course_lessons if obj.id in lesson["users_who_completed"]]
 
-            serialized_course_resume["total_lessons"] = len(course_lessons)
-            serialized_course_resume["lessons_completed"] = len(course_lessons_that_user_completed)
-            serialized_course_resume["completed"] = (len(course_lessons) == len(course_lessons_that_user_completed)) and len(course_lessons) != 0
+            qtd_total_lessons = len(course_lessons)
+            qtd_lessons_completed = len(course_lessons_that_user_completed)
+
+            serialized_course_resume["total_lessons"] = qtd_total_lessons
+            serialized_course_resume["lessons_completed"] = qtd_lessons_completed
+            serialized_course_resume["completed"] = (qtd_total_lessons == qtd_lessons_completed) and qtd_total_lessons != 0
+
+            completed_percentage = 0
+            if qtd_total_lessons > 0 and qtd_lessons_completed > 0:
+                completed_percentage = int(qtd_lessons_completed/qtd_total_lessons) * 100
+
+            serialized_course_resume["completed_percentage"] = completed_percentage
 
         return serialized_courses_resume
 
