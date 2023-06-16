@@ -11,5 +11,6 @@ urlpatterns = [
     path('', include(router.urls)),
     path('lessons/<int:lesson_id>/comments/', CommentViewSet.as_view({'post': 'create'}), name='lesson-comments'),
     path('lessons/<int:lesson_id>/comments/list', CommentViewSet.as_view({'get': 'list'}), name='list-comments'),
+    path('lessons/<int:lesson_id>/comments/<int:pk>/', CommentViewSet.as_view({'put': 'update', 'delete': 'destroy'}), name='comment-detail'),
     path('lessons/<int:lesson_id>/comments/<int:pk>/reply', CommentViewSet.as_view({'post': 'create_reply'}), name='reply-comment'),
 ]
