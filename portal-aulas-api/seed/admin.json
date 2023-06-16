@@ -5,9 +5,9 @@
         "fields": {
             "name": "Admin",
             "email": "admin@gmail.com",
-            "password": "123456",
+            "password": "bcrypt_sha256$$2b$12$T5OmWuSbrGVLxVvAYUlBVOmpLKjtF5.FRe9iHV58a8SFMXNNlbWYS",
             "about": "Admin user",
-            "role": [3],
+            "role": [1,2,3],
             "created": "2023-05-10T11:00:00-03:00",
             "modified": "2023-05-10T11:00:00-03:00"
         }
