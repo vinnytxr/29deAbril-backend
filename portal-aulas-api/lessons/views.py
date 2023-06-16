@@ -270,14 +270,14 @@ class CommentViewSet(viewsets.ModelViewSet):
 
     def create(self, request, *args, **kwargs):
         lesson_id = kwargs['lesson_id']
-        user = request.user
-        lesson = Lesson.objects.get(id=lesson_id)
+        user_id = request.user.id
         data = request.data.copy()
-        data['lesson'] = lesson.id
-        data['user'] = user.id
+        data['lesson'] = lesson_id
+        data['user'] = user_id
+        print(data)
         serializer = self.get_serializer(data=data)
         serializer.is_valid(raise_exception=True)
-        self.perform_create(serializer)
+        self.perform_create(serializer, user_id)
         headers = self.get_success_headers(serializer.data)
         return Response(serializer.data, status=status.HTTP_201_CREATED, headers=headers)
     
@@ -288,14 +288,15 @@ class CommentViewSet(viewsets.ModelViewSet):
         data = request.data.copy()
         data['lesson'] = lesson_id
         data['user'] = user_id
+        print(data)
         serializer = self.get_serializer(data=data)
         serializer.is_valid(raise_exception=True)
         self.perform_create_reply(serializer, parent_comment, user_id)
         headers = self.get_success_headers(serializer.data)
         return Response(serializer.data, status=status.HTTP_201_CREATED, headers=headers)
 
-    def perform_create(self, serializer):
-        serializer.save()
+    def perform_create(self, serializer, user_id):
+        serializer.save(user_id=user_id)
     
     def perform_create_reply(self, serializer, parent_comment, user_id):
         serializer.save(parent=parent_comment, user_id=user_id)
