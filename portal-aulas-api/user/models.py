@@ -98,5 +98,8 @@ class Invitation(models.Model):
 
 
 class Anotation(models.Model):
-   user = models.OneToOneField(User, on_delete=models.CASCADE)
-   anotations = models.TextField("Notas")
+   user = models.ForeignKey(User, on_delete=models.CASCADE, null=False, blank=False)
+   title = models.CharField("Titulo", max_length=120)
+   time = models.TimeField()
+   note = models.TextField("Nota")
+   link = models.URLField(max_length=200)
