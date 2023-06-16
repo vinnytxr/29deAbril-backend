@@ -1,6 +1,6 @@
 from user.models import User, Role, Invitation
 from courses.models import Course
-from user.serializers import UserSerializer, RoleSerializer, InvitationSerializer
+from user.serializers import UserSerializer, RoleSerializer, InvitationSerializer, UserSerializerForListProf
 from rest_framework import viewsets, views, exceptions, status
 from rest_framework.response import Response
 from . import services, authentication, permissions
@@ -79,7 +79,7 @@ class UserViewSet(viewsets.ModelViewSet):
   def list_professors(self, request):
       professors = User.objects.filter(role__in=[2])
 
-      serializer = self.get_serializer(professors, many=True)
+      serializer = UserSerializerForListProf(professors, many=True)
       return Response(serializer.data, status=status.HTTP_200_OK)
   
   @action(detail=False, methods=['patch'], url_path='prof-permission/(?P<professor_id>\d+)', authentication_classes = [authentication.CustomUserAuthentication], permission_classes=[CustomIsAdmin])
