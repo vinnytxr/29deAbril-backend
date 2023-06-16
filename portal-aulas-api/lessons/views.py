@@ -306,22 +306,25 @@ class CommentViewSet(viewsets.ModelViewSet):
         serializer = self.get_serializer(queryset, many=True)
         return Response(serializer.data)
 
-    def retrieve(self, request, *args, **kwargs):
-        instance = self.get_object()
-        serializer = self.get_serializer(instance)
-        return Response(serializer.data)
-
     def update(self, request, *args, **kwargs):
         partial = kwargs.pop('partial', False)
+        lesson_id = kwargs['lesson_id']
         instance = self.get_object()
-        serializer = self.get_serializer(instance, data=request.data, partial=partial)
+        user_id = request.user.id
+        data = request.data.copy()
+        data['lesson'] = lesson_id
+        data['user'] = user_id
+        
+        # Verifique se o usuário é o proprietário do comentário
+        if instance.user != request.user:
+            return Response({'detail': 'Você não tem permissão para atualizar este comentário.'}, status=status.HTTP_403_FORBIDDEN)
+
+        # Atualize o comentário com os dados fornecidos
+        serializer = self.get_serializer(instance, data=data, partial=partial)
         serializer.is_valid(raise_exception=True)
         self.perform_update(serializer)
-        return Response(serializer.data)
 
-    def partial_update(self, request, *args, **kwargs):
-        kwargs['partial'] = True
-        return self.update(request, *args, **kwargs)
+        return Response(serializer.data)
 
     def destroy(self, request, *args, **kwargs):
         instance = self.get_object()
