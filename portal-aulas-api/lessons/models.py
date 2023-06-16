@@ -26,3 +26,13 @@ class Lesson(models.Model):
 
     def __str__(self):
         return "Lesson({})".format(self.title)
+
+class Comment(models.Model):
+    id = models.BigAutoField(primary_key=True)
+    lesson = models.ForeignKey(Lesson, on_delete=models.CASCADE, related_name='lesson_comments')
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    content = models.CharField(max_length=512)
+    parent = models.ForeignKey('self', on_delete=models.CASCADE, null=True, blank=True, related_name='replies')
+
+    def __str__(self):
+        return "Comment({})".format(self.id)
