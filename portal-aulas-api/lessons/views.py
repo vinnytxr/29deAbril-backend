@@ -4,6 +4,7 @@ from rest_framework.decorators import action
 from django.shortcuts import get_object_or_404
 from .models import Lesson, Comment
 from user.models import User
+from courses.models import CompletedCourseRelation
 from .serializers import LessonSerializer, CommentSerializer
 from django.http import FileResponse, Http404, JsonResponse
 from django.conf import settings
@@ -13,6 +14,7 @@ from wsgiref.util import FileWrapper
 from .serializers import LessonSerializer, LessonWithPrevNextSerializer
 from wsgiref.util import FileWrapper
 import os
+import uuid
 import cv2
 import re
 import mimetypes
@@ -193,6 +195,8 @@ class LessonViewSet(viewsets.ModelViewSet):
     def complete_course(self, request, lesson_id=None, student_id=None):
         lesson = get_object_or_404(Lesson, pk=lesson_id)
         student = get_object_or_404(User, pk=student_id)
+
+        
 
         lesson.users_who_completed.add(student)
         lesson.save()

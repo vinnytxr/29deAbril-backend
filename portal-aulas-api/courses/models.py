@@ -9,6 +9,11 @@ def get_file_path(instance, filename):
     filename = f"{uuid.uuid4().hex}.{ext}"
     return os.path.join('images/courses', filename)
 
+def get_certificate_path(instance, filename):
+    ext = filename.split('.')[-1]
+    filename = f"{uuid.uuid4().hex}.{ext}"
+    return os.path.join('documents/courses/certificates', filename)
+
 class Course(models.Model):
     id = models.BigAutoField(primary_key=True)
     title = models.CharField(max_length=64, blank=False)
@@ -38,4 +43,17 @@ class Ratings(models.Model):
     class Meta:
         constraints = [
             models.UniqueConstraint(fields=['user', 'course'], name='unique_rating')
+        ]
+
+
+class CompletedCourseRelation(models.Model):
+    course = models.ForeignKey(Course, on_delete=models.CASCADE)
+    student = models.ForeignKey(User, on_delete=models.CASCADE)
+    certificate = models.FileField(upload_to=get_certificate_path)
+    date = models.DateField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['-date']
+        constraints = [
+            models.UniqueConstraint(fields=['course', 'student'], name='unique_course_student_certificate')
         ]
