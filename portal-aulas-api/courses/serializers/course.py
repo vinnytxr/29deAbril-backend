@@ -10,6 +10,11 @@ class CompletedCourseRelationSerializer(serializers.ModelSerializer):
         model = CompletedCourseRelation
         fields = '__all__'
 
+class CompletedCourseRelationResumeSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = CompletedCourseRelation
+        fields = ['certificate', 'date']
+
 class UserResumeSerializer(serializers.ModelSerializer):
     class Meta:
         model = User

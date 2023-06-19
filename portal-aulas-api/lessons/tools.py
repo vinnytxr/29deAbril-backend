@@ -3,9 +3,19 @@ from reportlab.pdfgen import canvas
 from reportlab.lib.utils import ImageReader
 from PIL import Image
 
-def generate_certificate(text_array, image1_path=None, image2_path=None, output_file_address=None):
+def generate_certificate(self, text_array, image1_path=None, image2_path=None, output_file_address=None, response=None):
+
+    # print(response)
+
+    # p = canvas.Canvas(response, pagesize=letter)
+    # p.drawString(100, 100, "Olá mundo!")
+    # p.showPage()
+    # p.save()
+
+    # return response
+
     # Define o tamanho da página em modo paisagem e cria o objeto canvas
-    c = canvas.Canvas(output_file_address, pagesize=landscape(letter))
+    c = canvas.Canvas(response, pagesize=landscape(letter))
 
     # Calcula o tamanho máximo permitido para a imagem
     image_width = letter[0] * 0.4
@@ -36,7 +46,7 @@ def generate_certificate(text_array, image1_path=None, image2_path=None, output_
     # Fecha o arquivo PDF
     c.save()
 
-    return output_file_address
+    return response
 
 # # Exemplo de uso
 # pdf_path = generate_certificate(["Alessandro Neves dos Santos", "Concluiu o curso Curso de Python para Iniciantes", "em 14 de maio de 2023", "", "", "", "Professor: Alessandro Neves dos Santos"], "./a.png", "./c.png", "output.pdf")
