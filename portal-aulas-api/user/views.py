@@ -1,6 +1,9 @@
 from user.models import User, Role, Invitation, Anotation
 from courses.models import Course
+from lessons.models import Lesson
 from user.serializers import UserSerializer, RoleSerializer, InvitationSerializer, AnotationSerializer
+from courses.serializers.course import CourseResumeSerializer
+from lessons.serializers import LessonResumeSerializer
 from rest_framework import viewsets, views, exceptions, status
 from rest_framework.response import Response
 from . import services, authentication, permissions
@@ -334,3 +337,41 @@ class AnotationViewSet(viewsets.ModelViewSet):
 
   authentication_classes = (authentication.CustomUserAuthentication,)
   permission_classes = (permissions.CustomIsAuthenticated,)
+
+  @action(detail=False, methods=['get'], url_path='list-notes-lesson/(?P<user_id>\d+)', authentication_classes = [authentication.CustomUserAuthentication])
+  def list_professors(self, request, user_id=None):
+      anotations = Anotation.objects.filter(user=user_id)
+
+      serializer = self.get_serializer(anotations, many=True)
+
+      input_list = serializer.data.copy()
+
+      output_list = []
+      sections = {}
+
+      for item in input_list:
+          curso_id = item["course"]
+          course_object = Course.objects.get(id=curso_id)
+          serializer_curso = CourseResumeSerializer(course_object)
+          titulo_curso = serializer_curso.data["title"]
+          if curso_id not in sections:
+              sections[curso_id] = {
+                  "course": curso_id,
+                  "titulo": titulo_curso,
+                  "notes": []
+              }
+          lesson_object = Lesson.objects.get(id=item["lesson"])
+          serializer_lesson = LessonResumeSerializer(lesson_object)
+          titulo_aula = serializer_lesson.data["title"]
+          sections[curso_id]["notes"].append({
+              "id": item["id"],
+              "lesson": item["lesson"],
+              "titulo": titulo_aula,
+              "time": item["time"],
+              "note": item["note"],
+              "link": item["link"]
+          })
+
+      output_list = list(sections.values())
+
+      return Response(output_list, status=status.HTTP_200_OK)
