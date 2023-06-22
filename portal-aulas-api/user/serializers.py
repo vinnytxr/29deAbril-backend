@@ -1,6 +1,7 @@
 from user.models import User, Role, Invitation, Anotation
 from rest_framework import serializers
 from courses.models import Course
+from lessons.models import Lesson
 from courses.serializers.course import CourseResumeSerializer
 from . import services
 from rest_framework.exceptions import ValidationError
@@ -139,6 +140,8 @@ class ChangePasswordSerializer(serializers.ModelSerializer):
 
 class AnotationSerializer(serializers.ModelSerializer):
     user = serializers.PrimaryKeyRelatedField(queryset=User.objects.all())
+    course = serializers.PrimaryKeyRelatedField(queryset=Course.objects.all())
+    lesson = serializers.PrimaryKeyRelatedField(queryset=Lesson.objects.all())
 
     class Meta:
         model = Anotation

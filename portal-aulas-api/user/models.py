@@ -99,7 +99,8 @@ class Invitation(models.Model):
 
 class Anotation(models.Model):
    user = models.ForeignKey(User, on_delete=models.CASCADE, null=False, blank=False)
-   title = models.CharField("Titulo", max_length=120)
-   time = models.TimeField()
-   note = models.TextField("Nota")
-   link = models.URLField(max_length=200)
+   course = models.ForeignKey('courses.Course', on_delete=models.CASCADE, null=True)
+   lesson = models.ForeignKey('lessons.Lesson', on_delete=models.CASCADE, null=True)
+   time = models.TimeField("Tempo", null=True) # só um float da soma dos segundos
+   note = models.TextField("Nota", null=True)
+   link = models.URLField(max_length=200, null=True)
