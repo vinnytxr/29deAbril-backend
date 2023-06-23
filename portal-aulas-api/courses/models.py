@@ -46,14 +46,13 @@ class Ratings(models.Model):
         ]
 
 
-class CompletedCourseRelation(models.Model):
+class ProgressCourseRelation(models.Model):
     course = models.ForeignKey(Course, on_delete=models.CASCADE)
     student = models.ForeignKey(User, on_delete=models.CASCADE)
-    certificate = models.FileField(upload_to=get_certificate_path)
     date = models.DateField(auto_now_add=True)
 
     class Meta:
         ordering = ['-date']
         constraints = [
-            models.UniqueConstraint(fields=['course', 'student'], name='unique_course_student_certificate')
+            models.UniqueConstraint(fields=['course', 'student'], name='unique_course_student_progress')
         ]

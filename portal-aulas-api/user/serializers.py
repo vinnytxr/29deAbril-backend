@@ -1,9 +1,9 @@
 from user.models import User, Role, Invitation
 from rest_framework import serializers
-from courses.models import Course, CompletedCourseRelation
+from courses.models import Course, ProgressCourseRelation
 from lessons.models import Lesson
 from lessons.serializers import LessonResumeSerializer, LessonSerializer
-from courses.serializers.course import CourseResumeSerializer, CompletedCourseRelationResumeSerializer
+from courses.serializers.course import CourseResumeSerializer, ProgressCourseRelationSerializer
 from . import services
 from rest_framework.exceptions import ValidationError
 from rest_framework.response import Response
@@ -127,12 +127,13 @@ class UserSerializer(serializers.ModelSerializer):
             if qtd_total_lessons > 0 and qtd_lessons_completed > 0:
                 completed_percentage = int((qtd_lessons_completed/qtd_total_lessons) * 100) 
             
-            completed_course_relation = CompletedCourseRelation.objects.filter(course__id=serialized_course_resume["id"], student=obj)
+            # \rvw
+            # completed_course_relation = CompletedCourseRelation.objects.filter(course__id=serialized_course_resume["id"], student=obj)
 
-            completed_course_info = CompletedCourseRelationResumeSerializer(completed_course_relation[0], many=False).data if completed_course_relation else None
+            # completed_course_info = CompletedCourseRelationResumeSerializer(completed_course_relation[0], many=False).data if completed_course_relation else None
 
 
-            serialized_course_resume["conclusion_info"] = completed_course_info
+            # serialized_course_resume["conclusion_info"] = completed_course_info
             
 
 

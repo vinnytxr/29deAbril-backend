@@ -4,8 +4,8 @@ from rest_framework.decorators import action
 from django.shortcuts import get_object_or_404
 from .models import Lesson, Comment
 from user.models import User
-from courses.models import CompletedCourseRelation, Course
-from courses.serializers.course import CompletedCourseRelationSerializer
+from courses.models import ProgressCourseRelation, Course
+from courses.serializers.course import ProgressCourseRelationSerializer
 from .serializers import LessonSerializer, CommentSerializer
 from django.http import FileResponse, Http404, JsonResponse
 from django.conf import settings

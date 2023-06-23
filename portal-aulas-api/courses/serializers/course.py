@@ -1,19 +1,14 @@
 from rest_framework import serializers
-from ..models import Course, CompletedCourseRelation
+from ..models import Course, ProgressCourseRelation
 from user.models import User
 from lessons.models import Lesson
 from lessons.serializers import LessonSerializer
 # from user.serializers import UserResumeSerializer
 
-class CompletedCourseRelationSerializer(serializers.ModelSerializer):
+class ProgressCourseRelationSerializer(serializers.ModelSerializer):
     class Meta:
-        model = CompletedCourseRelation
+        model = ProgressCourseRelation
         fields = '__all__'
-
-class CompletedCourseRelationResumeSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = CompletedCourseRelation
-        fields = ['certificate', 'date']
 
 class UserResumeSerializer(serializers.ModelSerializer):
     class Meta:
