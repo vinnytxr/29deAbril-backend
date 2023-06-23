@@ -338,8 +338,14 @@ class AnotationViewSet(viewsets.ModelViewSet):
   authentication_classes = (authentication.CustomUserAuthentication,)
   permission_classes = (permissions.CustomIsAuthenticated,)
 
-  @action(detail=False, methods=['get'], url_path='list-notes-lesson/(?P<user_id>\d+)', authentication_classes = [authentication.CustomUserAuthentication])
-  def list_professors(self, request, user_id=None):
+  @action(detail=False, methods=['get'], url_path='list-notes-lesson/(?P<user_id>\d+)/(?P<lesson_id>\d+)', authentication_classes = [authentication.CustomUserAuthentication])
+  def list_notes_lesson(self, request, user_id=None, lesson_id=None):
+      anotations = Anotation.objects.filter(user=user_id, lesson=lesson_id)
+      serializer = self.get_serializer(anotations, many=True)
+      return Response(serializer.data, status=status.HTTP_200_OK)
+
+  @action(detail=False, methods=['get'], url_path='list-notes/(?P<user_id>\d+)', authentication_classes = [authentication.CustomUserAuthentication])
+  def list_notes(self, request, user_id=None):
       anotations = Anotation.objects.filter(user=user_id)
 
       serializer = self.get_serializer(anotations, many=True)
