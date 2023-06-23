@@ -101,6 +101,5 @@ class Anotation(models.Model):
    user = models.ForeignKey(User, on_delete=models.CASCADE, null=False, blank=False)
    course = models.ForeignKey('courses.Course', on_delete=models.CASCADE, null=True)
    lesson = models.ForeignKey('lessons.Lesson', on_delete=models.CASCADE, null=True)
-   time = models.TimeField("Tempo", null=True) # só um float da soma dos segundos
+   time = models.FloatField("Tempo", null=True) # só um float da soma dos segundos
    note = models.TextField("Nota", null=True)
-   link = models.URLField(max_length=200, null=True)
