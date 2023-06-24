@@ -39,6 +39,8 @@ class Ratings(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE)
     course = models.ForeignKey(Course, on_delete=models.CASCADE)
     rating = models.IntegerField()
+    comment = models.TextField(null=True, blank=True)
+    commentVisibility = models.BooleanField(default=True)
 
     class Meta:
         constraints = [

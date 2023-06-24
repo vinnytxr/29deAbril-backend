@@ -5,4 +5,4 @@ class RatingsSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Ratings
-        fields = ['user', 'course', 'rating']
+        fields = ['user', 'course', 'rating', 'comment', 'commentVisibility']
