@@ -126,17 +126,6 @@ class UserSerializer(serializers.ModelSerializer):
             completed_percentage = 0
             if qtd_total_lessons > 0 and qtd_lessons_completed > 0:
                 completed_percentage = int((qtd_lessons_completed/qtd_total_lessons) * 100) 
-            
-            # \rvw
-            # completed_course_relation = CompletedCourseRelation.objects.filter(course__id=serialized_course_resume["id"], student=obj)
-
-            # completed_course_info = CompletedCourseRelationResumeSerializer(completed_course_relation[0], many=False).data if completed_course_relation else None
-
-
-            # serialized_course_resume["conclusion_info"] = completed_course_info
-            
-
-
 
             serialized_course_resume["completed_percentage"] = completed_percentage
 
