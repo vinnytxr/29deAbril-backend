@@ -4,6 +4,8 @@ from rest_framework.decorators import action
 from django.shortcuts import get_object_or_404
 from .models import Lesson, Comment
 from user.models import User
+from courses.models import ProgressCourseRelation, Course
+from courses.serializers.course import ProgressCourseRelationSerializer
 from .serializers import LessonSerializer, CommentSerializer
 from django.http import FileResponse, Http404, JsonResponse
 from django.conf import settings
@@ -16,6 +18,42 @@ import os
 import cv2
 import re
 import mimetypes
+from .tools import generate_certificate
+import datetime
+
+from django.http import HttpResponse
+from reportlab.lib.pagesizes import letter
+from reportlab.pdfgen import canvas
+
+def get_formated_date_now(data_atual):
+    # Dicionário com os nomes dos meses em português
+    meses = {
+        1: 'Janeiro',
+        2: 'Fevereiro',
+        3: 'Março',
+        4: 'Abril',
+        5: 'Maio',
+        6: 'Junho',
+        7: 'Julho',
+        8: 'Agosto',
+        9: 'Setembro',
+        10: 'Outubro',
+        11: 'Novembro',
+        12: 'Dezembro'
+    }
+
+    # Obtendo a data atual
+
+    # Obtendo o número do mês atual
+    numero_mes = data_atual.month
+
+    # Obtendo o nome do mês em português
+    nome_mes = meses[numero_mes]
+
+    # Formatando a data com o mês em português
+    data_formatada = data_atual.strftime(f"%d de {nome_mes} de %Y")
+
+    return data_formatada
 
 range_re = re.compile(r'bytes\s*=\s*(\d+)\s*-\s*(\d*)', re.I)
 
@@ -188,16 +226,67 @@ class LessonViewSet(viewsets.ModelViewSet):
     # body: multipart/form-data
     def partial_update(self, request, *args, **kwargs):
         return self.update(request, *args, **kwargs)
+
+    @action(detail=False, methods=['get'], url_path='generate-certificate/(?P<course_id>\d+)/(?P<student_id>\d+)')
+    def generate_certificate_request(self, request, course_id=None, student_id=None):
+
+        course = get_object_or_404(Course, pk=course_id)
+        student = get_object_or_404(User, pk=student_id)
+        
+        progress_course_relation = ProgressCourseRelation.objects.filter(course=course, student=student).first()
+
+        if not progress_course_relation:
+            return Response({'error': 'Progresso de curso não encontrado.'}, status=status.HTTP_400_BAD_REQUEST)
+
+        response = HttpResponse(content_type='application/pdf')
+        response['Content-Disposition'] = f'attachment; filename="certificado-{datetime.datetime.now().microsecond}.pdf"'
+
+        course_lessons_not_serialized = Lesson.objects.filter(course=course)
+        course_lessons = LessonSerializer(course_lessons_not_serialized, many=True).data
+        course_lessons_that_user_completed = [lesson for lesson in course_lessons if student.id in lesson["users_who_completed"]]
+
+        qtd_total_lessons = len(course_lessons)
+        qtd_lessons_completed = len(course_lessons_that_user_completed)
+        completed = (qtd_total_lessons == qtd_lessons_completed) and qtd_total_lessons != 0
+
+        data_formatada = get_formated_date_now(progress_course_relation.date)
+
+        texto = f"concluiu {qtd_lessons_completed} de {qtd_total_lessons} aulas do curso {course.title}" if not completed else f"concluiu o curso {course.title}"
+
+        return generate_certificate(self, [
+                f"{student.name}", 
+                texto, 
+                f"em {data_formatada}", 
+                "", "", "", 
+                f"Professor: {course.professor.name}"
+            ], 
+            "/app/media/certificate-logo.png", 
+            None,
+            response
+        )
     
-    @action(detail=False, methods=['post'], url_path='complete-course/(?P<lesson_id>\d+)/(?P<student_id>\d+)')
-    def complete_course(self, request, lesson_id=None, student_id=None):
+    @action(detail=False, methods=['post'], url_path='complete-lesson/(?P<lesson_id>\d+)/(?P<student_id>\d+)')
+    def complete_lesson(self, request, lesson_id=None, student_id=None):
         lesson = get_object_or_404(Lesson, pk=lesson_id)
         student = get_object_or_404(User, pk=student_id)
 
-        lesson.users_who_completed.add(student)
-        lesson.save()
+        try:
+            lesson.users_who_completed.add(student)
+            lesson.save()
 
-        serializer = self.get_serializer(lesson)
+            old_progress_course_relations = ProgressCourseRelation.objects.filter(course=lesson.course, student=student)
+
+            if old_progress_course_relations:
+                ProgressCourseRelation.delete(old_progress_course_relations[0])
+
+            progress_course_relation = ProgressCourseRelation(course=lesson.course, student=student)
+            progress_course_relation.save()
+
+            serializer = ProgressCourseRelationSerializer(progress_course_relation)
+        
+        except Exception as e:
+            return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
+        
         return Response(serializer.data, status=status.HTTP_201_CREATED)
     
     @action(detail=False, methods=['get'], url_path='stream-video/(?P<path>[^\s]+)')
