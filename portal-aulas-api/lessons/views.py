@@ -15,7 +15,6 @@ from wsgiref.util import FileWrapper
 from .serializers import LessonSerializer, LessonWithPrevNextSerializer
 from wsgiref.util import FileWrapper
 import os
-import uuid
 import cv2
 import re
 import mimetypes
@@ -26,7 +25,7 @@ from django.http import HttpResponse
 from reportlab.lib.pagesizes import letter
 from reportlab.pdfgen import canvas
 
-def get_formated_date_now():
+def get_formated_date_now(data_atual):
     # Dicionário com os nomes dos meses em português
     meses = {
         1: 'Janeiro',
@@ -44,7 +43,6 @@ def get_formated_date_now():
     }
 
     # Obtendo a data atual
-    data_atual = datetime.datetime.now()
 
     # Obtendo o número do mês atual
     numero_mes = data_atual.month
@@ -228,52 +226,20 @@ class LessonViewSet(viewsets.ModelViewSet):
     # body: multipart/form-data
     def partial_update(self, request, *args, **kwargs):
         return self.update(request, *args, **kwargs)
-    
-    def complete_course(self, course=None, student=None, total_lessons=0, completed_lessons=0, completed=False, response=None):
-        root_path = os.getcwd()
-        # filename = f"{uuid.uuid4().hex}.pdf"
-        # relative_certificate_address = f"documents/courses/certificates/temp/{filename}"
-        # complete_temp_filename_path = os.path.join(root_path, settings.MEDIA_ROOT, relative_certificate_address)
-
-        data_formatada = get_formated_date_now()
-
-        texto = f"concluiu {completed_lessons} de {total_lessons} aulas do curso {course.title}" if not completed else f"concluiu o curso {course.title}"
-
-        return generate_certificate([
-                f"{student.name}", 
-                texto, 
-                f"em {data_formatada}", 
-                "", "", "", 
-                f"Professor: {course.professor.name}"
-            ], 
-            "/app/media/certificate-logo.png", 
-            None, 
-            response
-        )
-
-        # completedCourseRelation = CompletedCourseRelation(course=course, student=student)
-
-        # with open(certificate_path, 'rb') as file:
-        #             completedCourseRelation.certificate.save('_.pdf', file)
-        
-        # completedCourseRelation.save()
-        # return CompletedCourseRelationSerializer(completedCourseRelation).data
 
     @action(detail=False, methods=['get'], url_path='generate-certificate/(?P<course_id>\d+)/(?P<student_id>\d+)')
-    def generate_certificate(self, request, course_id=None, student_id=None):
+    def generate_certificate_request(self, request, course_id=None, student_id=None):
 
         course = get_object_or_404(Course, pk=course_id)
         student = get_object_or_404(User, pk=student_id)
-
         
+        progress_course_relation = ProgressCourseRelation.objects.filter(course=course, student=student).first()
+
+        if not progress_course_relation:
+            return Response({'error': 'Progresso de curso não encontrado.'}, status=status.HTTP_400_BAD_REQUEST)
 
         response = HttpResponse(content_type='application/pdf')
-        response['Content-Disposition'] = 'attachment; filename="certificado.pdf"'
-
-        # p = canvas.Canvas(response, pagesize=letter)
-        # p.drawString(100, 100, "Olá mundo!")
-        # p.showPage()
-        # p.save()
+        response['Content-Disposition'] = f'attachment; filename="certificado-{datetime.datetime.now().microsecond}.pdf"'
 
         course_lessons_not_serialized = Lesson.objects.filter(course=course)
         course_lessons = LessonSerializer(course_lessons_not_serialized, many=True).data
@@ -283,10 +249,7 @@ class LessonViewSet(viewsets.ModelViewSet):
         qtd_lessons_completed = len(course_lessons_that_user_completed)
         completed = (qtd_total_lessons == qtd_lessons_completed) and qtd_total_lessons != 0
 
-        # return response
-
-        
-        data_formatada = get_formated_date_now()
+        data_formatada = get_formated_date_now(progress_course_relation.date)
 
         texto = f"concluiu {qtd_lessons_completed} de {qtd_total_lessons} aulas do curso {course.title}" if not completed else f"concluiu o curso {course.title}"
 
@@ -299,68 +262,28 @@ class LessonViewSet(viewsets.ModelViewSet):
             ], 
             "/app/media/certificate-logo.png", 
             None,
-            None, 
             response
         )
-        
-
-
-        return self.complete_course(course, student, qtd_total_lessons, 2, False, response) 
     
-    @action(detail=False, methods=['post'], url_path='complete-course/(?P<lesson_id>\d+)/(?P<student_id>\d+)')
+    @action(detail=False, methods=['post'], url_path='complete-lesson/(?P<lesson_id>\d+)/(?P<student_id>\d+)')
     def complete_lesson(self, request, lesson_id=None, student_id=None):
         lesson = get_object_or_404(Lesson, pk=lesson_id)
         student = get_object_or_404(User, pk=student_id)
 
-        course = lesson.course
-
-        course_lessons_not_serialized = Lesson.objects.filter(course=course)
-        course_lessons = LessonSerializer(course_lessons_not_serialized, many=True).data
-        course_lessons_that_user_completed = [lesson for lesson in course_lessons if student.id in lesson["users_who_completed"]]
-
-        qtd_total_lessons = len(course_lessons)
-        qtd_lessons_completed = len(course_lessons_that_user_completed)
-        completed = (qtd_total_lessons == qtd_lessons_completed) and qtd_total_lessons != 0
-
-        print(qtd_total_lessons, qtd_lessons_completed, completed)
-
-        # root_path = os.getcwd()
-        # filename = f"{uuid.uuid4().hex}.pdf"
-        # relative_certificate_address = f"documents/courses/certificates/temp/{filename}"
-        # complete_temp_filename_path = os.path.join(root_path, settings.MEDIA_ROOT, relative_certificate_address)
-
-        # print(complete_temp_filename_path)
-
-        # data_formatada = get_formated_date_now()
-
-        # pdf_path = generate_certificate([
-        #         f"{student.name}", 
-        #         f"concluiu o curso {course.title}", 
-        #         f"em {data_formatada}", 
-        #         "", "", "", 
-        #         f"Professor: {course.professor.name}"
-        #     ], 
-        #     "/app/media/certificate-logo.png", 
-        #     None, 
-        #     complete_temp_filename_path
-        # )
-
-        # print(f"path: {complete_temp_filename_path} {pdf_path}")
         try:
-            # completedCourseRelation = CompletedCourseRelation(course=course, student=student)
-
-            # with open(complete_temp_filename_path, 'rb') as file:
-            #             completedCourseRelation.certificate.save('_.pdf', file)
-            
-            # completedCourseRelation.save()
-
             lesson.users_who_completed.add(student)
             lesson.save()
-            serializer = self.get_serializer(lesson)
 
-            self.complete_course(course, student, qtd_total_lessons, 2, False)
+            old_progress_course_relations = ProgressCourseRelation.objects.filter(course=lesson.course, student=student)
 
-            # serializer = CompletedCourseRelationSerializer(completedCourseRelation)
+            if old_progress_course_relations:
+                ProgressCourseRelation.delete(old_progress_course_relations[0])
+
+            progress_course_relation = ProgressCourseRelation(course=lesson.course, student=student)
+            progress_course_relation.save()
+
+            serializer = ProgressCourseRelationSerializer(progress_course_relation)
+        
         except Exception as e:
             return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
         

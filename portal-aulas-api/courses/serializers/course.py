@@ -33,8 +33,8 @@ class CourseSerializerForGETS(serializers.ModelSerializer):
         return UserResumeSerializer(students, many=True).data
     
     def get_completed_relations(self, obj):
-        relations = CompletedCourseRelation.objects.filter(course=obj)
-        return CompletedCourseRelationSerializer(relations, many=True).data
+        relations = ProgressCourseRelation.objects.filter(course=obj)
+        return ProgressCourseRelationSerializer(relations, many=True).data
 
 class CourseSerializerForPOSTS(serializers.ModelSerializer):
     professor = serializers.PrimaryKeyRelatedField(queryset=User.objects.all(), required=True)
