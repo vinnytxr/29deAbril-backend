@@ -4,7 +4,7 @@ from rest_framework.decorators import action
 from django.shortcuts import get_object_or_404
 from .models import Lesson, Comment
 from user.models import User
-from courses.models import ProgressCourseRelation, Course
+from courses.models import ProgressCourseRelation, Course, CourseCategory
 from courses.serializers.course import ProgressCourseRelationSerializer
 from .serializers import LessonSerializer, CommentSerializer
 from django.http import FileResponse, Http404, JsonResponse
@@ -104,12 +104,27 @@ class LessonViewSet(viewsets.ModelViewSet):
         
     def create(self, request, *args, **kwargs):
 
+        # print(request.data["category"])
+
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
 
         self.perform_create(serializer)
         # Retrieve the saved object
         lesson = serializer.instance
+
+        if "category" in request.data:
+            category = get_object_or_404(CourseCategory, pk=request.data["category"])
+
+            lesson.category = category
+            lesson.save()
+        else:
+            categories = CourseCategory.objects.filter(course__id=request.data["course"]).order_by('id')
+            if categories:
+                lesson.category = categories[0]
+                lesson.save()
+
+
 
         if 'banner' not in request.data and lesson.video is not None:
             # Access the 'banner' attribute of the saved object
@@ -181,6 +196,11 @@ class LessonViewSet(viewsets.ModelViewSet):
         self.perform_update(serializer)
 
         lesson = serializer.instance
+
+        if "category" in request.data:
+            category = get_object_or_404(CourseCategory, pk=request.data["category"])
+            lesson.category = category
+            lesson.save()
 
         # if 'banner' not in request.data and 'video' in request.data and lesson.video is not None:
         if use_banner_from_frame_video and lesson.video is not None:

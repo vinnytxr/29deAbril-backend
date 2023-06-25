@@ -1,5 +1,5 @@
 from django.db import models
-from courses.models import Course
+from courses.models import Course, CourseCategory
 from user.models import User
 
 import os
@@ -31,6 +31,7 @@ class Lesson(models.Model):
     title_appendix = models.CharField(max_length=64, null=True, blank=False)
     course = models.ForeignKey(Course, on_delete=models.CASCADE, related_name='lessons', null=False, blank=False)
     users_who_completed = models.ManyToManyField(User, blank=True)
+    category = models.ForeignKey(CourseCategory, on_delete=models.CASCADE, related_name='lessons', null=True, blank=True)
 
     def __str__(self):
         return "Lesson({})".format(self.title)

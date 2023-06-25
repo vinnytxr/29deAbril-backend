@@ -3,6 +3,7 @@ from ..models import Course, ProgressCourseRelation
 from user.models import User
 from lessons.models import Lesson
 from lessons.serializers import LessonSerializer
+from .category import CourseCategorySerializerForGETS
 # from user.serializers import UserResumeSerializer
 
 class ProgressCourseRelationSerializer(serializers.ModelSerializer):
@@ -19,6 +20,10 @@ class CourseSerializerForGETS(serializers.ModelSerializer):
     professor = serializers.SerializerMethodField('get_professor')
     students = serializers.SerializerMethodField('get_students')
     completed_course_relation = serializers.SerializerMethodField('get_completed_relations')
+    categories = serializers.SerializerMethodField('get_categories')
+
+    def get_categories(self, obj):
+        return CourseCategorySerializerForGETS(obj.categories, many=True).data
 
     class Meta:
         model = Course

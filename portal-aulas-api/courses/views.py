@@ -7,7 +7,7 @@ from .models import Course, Learning, Ratings, CourseCategory
 from .serializers.course import CourseSerializerForPOSTS, CourseSerializerForGETS
 from .serializers.learning import LearningSerializer
 from .serializers.ratings import RatingsSerializer
-from .serializers.category import CourseCategorySerializerForGETS, CourseCategorySerializerForPOSTS
+from .serializers.category import CourseCategorySerializerForGETS, CourseCategorySerializerForPOSTS, CourseCategoryDepthSerializerForGETS
 from user.models import User, ROLES
 from django.db import models
 
@@ -114,9 +114,12 @@ class CourseViewSet(viewsets.ModelViewSet):
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
 
-        serializer.save()
+        course = serializer.save()
 
-        headers = self.get_success_headers(serializer.data)
+        course_category = CourseCategory(course=course, name='Geral', lessons_order=[])
+        course_category.save()
+
+        headers = self.get_success_headers(serializer.data) 
         return Response(serializer.data, status=status.HTTP_201_CREATED, headers=headers)
 
     def calculate_rating_mean(self, course_id):
@@ -333,11 +336,17 @@ class CategoriesViewSet(viewsets.ModelViewSet):
             return CourseCategorySerializerForGETS
         
     @action(detail=False, methods=['get'], url_path='course/(?P<course_id>\d+)')
-    def generate_certificate_request(self, request, course_id=None):
+    def get_category_by_course(self, request, course_id=None):
+        depth = request.GET.get('depth')
 
         course = get_object_or_404(Course, pk=course_id)
 
         queryset = self.filter_queryset(self.get_queryset().filter(course=course))
-        serializer = self.get_serializer(queryset, many=True)
+        
+        if depth and depth != '0':
+            serializer = CourseCategoryDepthSerializerForGETS(queryset, many=True)
+        else:
+            serializer = self.get_serializer(queryset, many=True)
+        
 
         return Response(serializer.data)
