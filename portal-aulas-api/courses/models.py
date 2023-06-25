@@ -67,11 +67,11 @@ class CourseCategory(models.Model):
     name = models.CharField(max_length=64, blank=False)
     lessons_order = models.TextField()
 
-    def set_lessons_order(self, lessons_order):
-        self.lessons_order = json.dumps(lessons_order)
-
     def get_lessons_order(self):
         return json.loads(self.lessons_order)
+    
+    # def set_lessons_order(self, lessons_order):
+    #     self.lessons_order = json.dumps(lessons_order)
 
     def __str__(self):
         return f"CourseCategory object ({self.pk})"

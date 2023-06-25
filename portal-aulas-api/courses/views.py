@@ -3,10 +3,11 @@ from rest_framework.response import Response
 from rest_framework.decorators import action
 from django.shortcuts import get_object_or_404
 
-from .models import Course, Learning, Ratings
+from .models import Course, Learning, Ratings, CourseCategory
 from .serializers.course import CourseSerializerForPOSTS, CourseSerializerForGETS
 from .serializers.learning import LearningSerializer
 from .serializers.ratings import RatingsSerializer
+from .serializers.category import CourseCategorySerializerForGETS, CourseCategorySerializerForPOSTS
 from user.models import User, ROLES
 from django.db import models
 
@@ -320,3 +321,23 @@ class RatingsViewSet(viewsets.ModelViewSet):
         response = Response(serializer.data, status=status.HTTP_200_OK)
 
         return response
+
+class CategoriesViewSet(viewsets.ModelViewSet):
+    queryset = CourseCategory.objects.all()
+    pagination_class = None
+
+    def get_serializer_class(self):
+        if self.action in ['create', 'update', 'partial_update']:
+            return CourseCategorySerializerForPOSTS
+        else:
+            return CourseCategorySerializerForGETS
+        
+    @action(detail=False, methods=['get'], url_path='course/(?P<course_id>\d+)')
+    def generate_certificate_request(self, request, course_id=None):
+
+        course = get_object_or_404(Course, pk=course_id)
+
+        queryset = self.filter_queryset(self.get_queryset().filter(course=course))
+        serializer = self.get_serializer(queryset, many=True)
+
+        return Response(serializer.data)
