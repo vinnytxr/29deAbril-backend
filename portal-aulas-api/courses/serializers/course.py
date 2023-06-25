@@ -22,7 +22,7 @@ class CourseSerializerForGETS(serializers.ModelSerializer):
 
     class Meta:
         model = Course
-        fields = ['id', 'title', 'description', 'banner', 'content', 'rating', 'count_ratings', 'professor', 'learnings', 'students', 'lessons', 'completed_course_relation']
+        fields = ['id', 'title', 'description', 'banner', 'content', 'rating', 'count_ratings', 'professor', 'learnings', 'students', 'lessons', 'completed_course_relation', 'categories']
         depth = 1
         
     def get_professor(self, obj):
