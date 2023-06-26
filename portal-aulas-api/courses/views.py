@@ -311,6 +311,16 @@ class RatingsViewSet(viewsets.ModelViewSet):
         self.perform_update(serializer)
 
         return Response(serializer.data)
+    
+    @action(detail=False, methods=['delete'], url_path='delete-rating/(?P<course_id>\d+)/(?P<user_id>\d+)')
+    def destroy_ratings(self, request, course_id=None, user_id=None):
+        try:
+            instance = Ratings.objects.get(user_id=user_id, course_id=course_id)
+        except:
+            return Response({"error": "Avaliação não encontrada."}, status=status.HTTP_400_BAD_REQUEST)
+        
+        instance.delete()
+        return Response(status=status.HTTP_200_OK)
 
     @action(detail=False, methods=['get'], url_path='check-rating/(?P<course_id>\d+)/(?P<user_id>\d+)')
     def check_rating(self, request, course_id=None, user_id=None):

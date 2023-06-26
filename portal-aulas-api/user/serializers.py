@@ -23,6 +23,11 @@ class RoleSerializer(serializers.ModelSerializer):
         model = Role
         fields = ['id', 'name']
 
+class UserSerializerForListProf(serializers.ModelSerializer):
+    class Meta:
+        model = User
+        fields = ('id', 'name', 'email', 'created')
+
 class UserSerializer(serializers.ModelSerializer):
     role = serializers.PrimaryKeyRelatedField(queryset=Role.objects.all(), many=True)
     created_courses = serializers.SerializerMethodField()
