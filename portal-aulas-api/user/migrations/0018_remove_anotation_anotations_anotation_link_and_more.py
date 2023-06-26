@@ -27,7 +27,7 @@ class Migration(migrations.Migration):
         migrations.AddField(
             model_name='anotation',
             name='time',
-            field=models.TimeField(null=True, verbose_name='Tempo'),
+            field=models.FloatField(null=True, verbose_name='Tempo'),
         ),
         migrations.AddField(
             model_name='anotation',
