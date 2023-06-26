@@ -1,5 +1,5 @@
 from django.db import models
-from courses.models import Course
+from courses.models import Course, CourseCategory
 from user.models import User
 
 import os
@@ -31,16 +31,27 @@ class Lesson(models.Model):
     title_appendix = models.CharField(max_length=64, null=True, blank=False)
     course = models.ForeignKey(Course, on_delete=models.CASCADE, related_name='lessons', null=False, blank=False)
     users_who_completed = models.ManyToManyField(User, blank=True)
+    category = models.ForeignKey(CourseCategory, on_delete=models.CASCADE, related_name='lessons', null=True, blank=True)
 
     def __str__(self):
         return "Lesson({})".format(self.title)
+    
 
 class Comment(models.Model):
     id = models.BigAutoField(primary_key=True)
     lesson = models.ForeignKey(Lesson, on_delete=models.CASCADE, related_name='lesson_comments')
     user = models.ForeignKey(User, on_delete=models.CASCADE)
     content = models.CharField(max_length=512)
-    parent = models.ForeignKey('self', on_delete=models.CASCADE, null=True, blank=True, related_name='replies')
 
     def __str__(self):
         return "Comment({})".format(self.id)
+    
+class CommentReply(models.Model):
+    id = models.BigAutoField(primary_key=True)
+    comment = models.ForeignKey(Comment, on_delete=models.CASCADE, related_name='replies')
+    lesson = models.ForeignKey(Lesson, on_delete=models.CASCADE, related_name='lesson_comment_replies')
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    content = models.CharField(max_length=512)
+    
+    def __str__(self):
+        return "Comment reply({})".format(self.id)

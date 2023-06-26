@@ -3,6 +3,7 @@ from ..models import Course, ProgressCourseRelation
 from user.models import User
 from lessons.models import Lesson
 from lessons.serializers import LessonSerializer
+from .category import CourseCategorySerializerForGETS
 # from user.serializers import UserResumeSerializer
 
 class ProgressCourseRelationSerializer(serializers.ModelSerializer):
@@ -19,10 +20,18 @@ class CourseSerializerForGETS(serializers.ModelSerializer):
     professor = serializers.SerializerMethodField('get_professor')
     students = serializers.SerializerMethodField('get_students')
     completed_course_relation = serializers.SerializerMethodField('get_completed_relations')
+    categories = serializers.SerializerMethodField('get_categories')
+    categories_order = serializers.SerializerMethodField()
+
+    def get_categories(self, obj):
+        return CourseCategorySerializerForGETS(obj.categories, many=True).data
+    
+    def get_categories_order(self, obj):
+        return obj.get_categories_order()
 
     class Meta:
         model = Course
-        fields = ['id', 'title', 'description', 'banner', 'content', 'rating', 'count_ratings', 'professor', 'learnings', 'students', 'lessons', 'completed_course_relation']
+        fields = ['id', 'title', 'description', 'banner', 'content', 'rating', 'count_ratings', 'professor', 'learnings', 'students', 'lessons', 'completed_course_relation', 'categories', 'categories_order']
         depth = 1
         
     def get_professor(self, obj):
@@ -38,14 +47,15 @@ class CourseSerializerForGETS(serializers.ModelSerializer):
 
 class CourseSerializerForPOSTS(serializers.ModelSerializer):
     professor = serializers.PrimaryKeyRelatedField(queryset=User.objects.all(), required=True)
+    # categories_order = serializers.ListField(child=serializers.IntegerField())
 
     # def get_professor(self, obj):
     #     return ProfessorResumeSerializer(obj.professor).data
 
     class Meta:
         model = Course
-        fields = ['id', 'title', 'description', 'banner', 'content', 'rating', 'count_ratings', 'professor', 'learnings']
-        depth = 1
+        fields = ['id', 'title', 'description', 'banner', 'content', 'rating', 'count_ratings', 'professor', 'learnings', 'categories_order']
+        # depth = 1
 
 class CourseResumeSerializer(serializers.ModelSerializer):
     class Meta:

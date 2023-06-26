@@ -4,9 +4,9 @@ from rest_framework.decorators import action
 from django.shortcuts import get_object_or_404
 from .models import Lesson, Comment
 from user.models import User
-from courses.models import ProgressCourseRelation, Course
+from courses.models import ProgressCourseRelation, Course, CourseCategory
 from courses.serializers.course import ProgressCourseRelationSerializer
-from .serializers import LessonSerializer, CommentSerializer
+from .serializers import LessonSerializer, CommentSerializer, CommentReplySerializer
 from django.http import FileResponse, Http404, JsonResponse
 from django.conf import settings
 from user import authentication, permissions
@@ -108,8 +108,20 @@ class LessonViewSet(viewsets.ModelViewSet):
         serializer.is_valid(raise_exception=True)
 
         self.perform_create(serializer)
-        # Retrieve the saved object
         lesson = serializer.instance
+
+        if "category" in request.data:
+            category = get_object_or_404(CourseCategory, pk=request.data["category"])
+
+            lesson.category = category
+            lesson.save()
+        else:
+            categories = CourseCategory.objects.filter(course__id=request.data["course"]).order_by('id')
+            if categories:
+                lesson.category = categories[0]
+                lesson.save()
+
+
 
         if 'banner' not in request.data and lesson.video is not None:
             # Access the 'banner' attribute of the saved object
@@ -163,8 +175,6 @@ class LessonViewSet(viewsets.ModelViewSet):
         if 'useframe' in request.data:
             use_banner_from_frame_video = True if int(request.data['useframe']) == 1 else False
 
-        print('userframe: ', use_banner_from_frame_video)
-
         # Verifica se há uma nova imagem na requisição
         if 'banner' in request.FILES:
             # Exclui a imagem antiga
@@ -181,6 +191,11 @@ class LessonViewSet(viewsets.ModelViewSet):
         self.perform_update(serializer)
 
         lesson = serializer.instance
+
+        if "category" in request.data:
+            category = get_object_or_404(CourseCategory, pk=request.data["category"])
+            lesson.category = category
+            lesson.save()
 
         # if 'banner' not in request.data and 'video' in request.data and lesson.video is not None:
         if use_banner_from_frame_video and lesson.video is not None:
@@ -363,13 +378,12 @@ class CommentViewSet(viewsets.ModelViewSet):
         data = request.data.copy()
         data['lesson'] = lesson_id
         data['user'] = user_id
-        print(data)
         serializer = self.get_serializer(data=data)
         serializer.is_valid(raise_exception=True)
         self.perform_create(serializer, user_id)
         headers = self.get_success_headers(serializer.data)
         return Response(serializer.data, status=status.HTTP_201_CREATED, headers=headers)
-    
+
     def create_reply(self, request, *args, **kwargs):
         parent_comment = self.get_object()
         lesson_id = kwargs['lesson_id']
@@ -377,8 +391,7 @@ class CommentViewSet(viewsets.ModelViewSet):
         data = request.data.copy()
         data['lesson'] = lesson_id
         data['user'] = user_id
-        print(data)
-        serializer = self.get_serializer(data=data)
+        serializer = CommentReplySerializer(data=data)
         serializer.is_valid(raise_exception=True)
         self.perform_create_reply(serializer, parent_comment, user_id)
         headers = self.get_success_headers(serializer.data)
@@ -388,13 +401,17 @@ class CommentViewSet(viewsets.ModelViewSet):
         serializer.save(user_id=user_id)
     
     def perform_create_reply(self, serializer, parent_comment, user_id):
-        serializer.save(parent=parent_comment, user_id=user_id)
+        serializer.save(comment=parent_comment, user_id=user_id)
 
     def list(self, request, *args, **kwargs):
         lesson_id = kwargs['lesson_id']
-        queryset = self.filter_queryset(self.get_queryset().filter(lesson_id=lesson_id))
+        user_id = request.user.id
+        queryset = self.get_queryset().filter(lesson_id=lesson_id, user_id=user_id)
+        other_comments = self.get_queryset().filter(lesson_id=lesson_id).exclude(user_id=user_id)
+        queryset = list(queryset) + list(other_comments)
         serializer = self.get_serializer(queryset, many=True)
         return Response(serializer.data)
+
 
     def update(self, request, *args, **kwargs):
         partial = kwargs.pop('partial', False)
