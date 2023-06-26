@@ -1,17 +1,24 @@
 from django.shortcuts import get_object_or_404
 from rest_framework import serializers
+from courses.serializers.category import CourseCategoryResumeSerializer
 from .models import Lesson, Comment, User, CommentReply
 
 class LessonSerializer(serializers.ModelSerializer):
+    category = serializers.SerializerMethodField('get_category')
 
     class Meta:
         model = Lesson
         fields = '__all__'
+
+    def get_category(self, obj):
+        return CourseCategoryResumeSerializer(obj.category).data
     
 class LessonWithPrevNextSerializer(serializers.ModelSerializer):
     prev = serializers.SerializerMethodField('get_prev_lesson')
     next = serializers.SerializerMethodField('get_next_lesson')
     professor = serializers.SerializerMethodField('get_professor_from_course')
+    category = serializers.SerializerMethodField('get_category')
+    
     class Meta:
         model = Lesson
         fields = '__all__'
@@ -22,6 +29,9 @@ class LessonWithPrevNextSerializer(serializers.ModelSerializer):
         if prev_lesson:
             return LessonResumeSerializer(prev_lesson).data
         return None
+    
+    def get_category(self, obj):
+        return CourseCategoryResumeSerializer(obj.category).data
     
     def get_next_lesson(self, obj):
         next_lesson = Lesson.objects.filter(course=obj.course, id__gt=obj.id).order_by('id').first()

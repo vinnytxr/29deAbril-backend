@@ -3,6 +3,7 @@ from user.models import User
 
 import os
 import uuid
+import json
 
 def get_file_path(instance, filename):
     ext = filename.split('.')[-1]
@@ -23,6 +24,10 @@ class Course(models.Model):
     content = models.CharField(max_length=1024, null=False, blank=False)
     rating = models.FloatField(default=0.0, null=True)
     count_ratings = models.IntegerField(default=0, null=True)
+    categories_order = models.TextField(default='[]')
+
+    def get_categories_order(self):
+        return json.loads(self.categories_order)
 
     def __str__(self):
         return self.title 
@@ -59,3 +64,19 @@ class ProgressCourseRelation(models.Model):
         constraints = [
             models.UniqueConstraint(fields=['course', 'student'], name='unique_course_student_progress')
         ]
+
+
+class CourseCategory(models.Model):
+    id = models.BigAutoField(primary_key=True)
+    course = models.ForeignKey(Course, on_delete=models.CASCADE, related_name='categories')
+    name = models.CharField(max_length=64, blank=False)
+    lessons_order = models.TextField(default='[]')
+
+    def get_lessons_order(self):
+        return json.loads(self.lessons_order)
+    
+    # def set_lessons_order(self, lessons_order):
+    #     self.lessons_order = json.dumps(lessons_order)
+
+    def __str__(self):
+        return f"CourseCategory object ({self.pk})"

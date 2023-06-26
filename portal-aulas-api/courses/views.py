@@ -3,16 +3,18 @@ from rest_framework.response import Response
 from rest_framework.decorators import action
 from django.shortcuts import get_object_or_404
 
-from .models import Course, Learning, Ratings
+from .models import Course, Learning, Ratings, CourseCategory
 from .serializers.course import CourseSerializerForPOSTS, CourseSerializerForGETS
 from .serializers.learning import LearningSerializer
 from .serializers.ratings import RatingsSerializer
+from .serializers.category import CourseCategorySerializerForGETS, CourseCategorySerializerForPOSTS, CourseCategoryDepthSerializerForGETS
 from user.models import User, ROLES
 from django.db import models
 
 import requests
 from django.conf import settings
 from user import authentication, serializers
+import json
 
 class CourseViewSet(viewsets.ModelViewSet):
     queryset = Course.objects.all()
@@ -113,9 +115,15 @@ class CourseViewSet(viewsets.ModelViewSet):
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
 
-        serializer.save()
+        course = serializer.save()
 
-        headers = self.get_success_headers(serializer.data)
+        course_category = CourseCategory(course=course, name='Geral', lessons_order=[])
+        course_category.save()
+
+        course.categories_order = json.dumps([course_category.id])
+        course.save()
+
+        headers = self.get_success_headers(serializer.data) 
         return Response(serializer.data, status=status.HTTP_201_CREATED, headers=headers)
 
     def calculate_rating_mean(self, course_id):
@@ -330,3 +338,72 @@ class RatingsViewSet(viewsets.ModelViewSet):
         response = Response(serializer.data, status=status.HTTP_200_OK)
 
         return response
+
+class CategoriesViewSet(viewsets.ModelViewSet):
+    queryset = CourseCategory.objects.all()
+    pagination_class = None
+
+    def get_serializer_class(self):
+        if self.action in ['create', 'update', 'partial_update']:
+            return CourseCategorySerializerForPOSTS
+        else:
+            return CourseCategorySerializerForGETS
+        
+    def create(self, request, *args, **kwargs):
+        serializer = self.get_serializer(data=request.data)
+
+        if serializer.is_valid():
+            serializer.save()
+
+            course = CourseSerializerForGETS(serializer.instance.course, many=False)
+
+            categories_order = json.loads(course.instance.categories_order)
+            categories_order.append(serializer.instance.id)
+
+            course.instance.categories_order = json.dumps(categories_order)
+            course.instance.save()
+
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+        
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+        
+
+        
+    @action(detail=False, methods=['get'], url_path='course/(?P<course_id>\d+)')
+    def get_category_by_course(self, request, course_id=None):
+        depth = request.GET.get('depth')
+
+        course = get_object_or_404(Course, pk=course_id)
+
+        queryset = self.filter_queryset(self.get_queryset().filter(course=course))
+        
+        if depth and depth != '0':
+            serializer = CourseCategoryDepthSerializerForGETS(queryset, many=True)
+        else:
+            serializer = self.get_serializer(queryset, many=True)
+
+        data = serializer.data
+
+        data = {'categories': serializer.data, 'order': json.loads(course.categories_order)}
+        
+        return Response(data)
+    
+    def destroy(self, request, *args, **kwargs):
+        instance = self.get_object()
+
+        serializer = self.get_serializer(instance, many=False)
+
+        if len(serializer.data['lessons']) > 0:
+            return Response({'error': 'categoria possui aulas vinculadas'}, status=status.HTTP_400_BAD_REQUEST)
+        
+        course = CourseSerializerForGETS(serializer.instance.course, many=False)
+
+        categories_order = json.loads(course.instance.categories_order)
+        categories_order.remove(serializer.instance.id)
+
+        course.instance.categories_order = json.dumps(categories_order)
+        course.instance.save()
+
+        self.perform_destroy(instance)
+        return Response(status=status.HTTP_204_NO_CONTENT)
