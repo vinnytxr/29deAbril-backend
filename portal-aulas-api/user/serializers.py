@@ -1,8 +1,9 @@
 from user.models import User, Role, Invitation, Anotation
 from rest_framework import serializers
-from courses.models import Course
+from courses.models import Course, ProgressCourseRelation
 from lessons.models import Lesson
-from courses.serializers.course import CourseResumeSerializer
+from lessons.serializers import LessonResumeSerializer, LessonSerializer
+from courses.serializers.course import CourseResumeSerializer, ProgressCourseRelationSerializer
 from . import services
 from rest_framework.exceptions import ValidationError
 from rest_framework.response import Response
@@ -111,7 +112,29 @@ class UserSerializer(serializers.ModelSerializer):
     
     def get_enrolled_courses(self, obj):
         enrolled_course = obj.courses.all()
-        return CourseResumeSerializer(enrolled_course, many=True).data
+        serialized_courses_resume = CourseResumeSerializer(enrolled_course, many=True).data
+
+        for serialized_course_resume in serialized_courses_resume:
+            total = 0
+            course_lessons_not_serialized = Lesson.objects.filter(course__id=serialized_course_resume["id"])
+            course_lessons = LessonSerializer(course_lessons_not_serialized, many=True).data
+            course_lessons_that_user_completed = [lesson for lesson in course_lessons if obj.id in lesson["users_who_completed"]]
+
+            qtd_total_lessons = len(course_lessons)
+            qtd_lessons_completed = len(course_lessons_that_user_completed)
+            completed = (qtd_total_lessons == qtd_lessons_completed) and qtd_total_lessons != 0
+
+            serialized_course_resume["total_lessons"] = qtd_total_lessons
+            serialized_course_resume["lessons_completed"] = qtd_lessons_completed
+            serialized_course_resume["completed"] = completed
+
+            completed_percentage = 0
+            if qtd_total_lessons > 0 and qtd_lessons_completed > 0:
+                completed_percentage = int((qtd_lessons_completed/qtd_total_lessons) * 100) 
+
+            serialized_course_resume["completed_percentage"] = completed_percentage
+
+        return serialized_courses_resume
 
     def get_favorite_courses(self, obj):
         favorite_courses = obj.favorite_courses.all()

@@ -1,9 +1,14 @@
 from rest_framework import serializers
-from ..models import Course
+from ..models import Course, ProgressCourseRelation
 from user.models import User
 from lessons.models import Lesson
 from lessons.serializers import LessonSerializer
 # from user.serializers import UserResumeSerializer
+
+class ProgressCourseRelationSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = ProgressCourseRelation
+        fields = '__all__'
 
 class UserResumeSerializer(serializers.ModelSerializer):
     class Meta:
@@ -13,10 +18,11 @@ class UserResumeSerializer(serializers.ModelSerializer):
 class CourseSerializerForGETS(serializers.ModelSerializer):
     professor = serializers.SerializerMethodField('get_professor')
     students = serializers.SerializerMethodField('get_students')
+    completed_course_relation = serializers.SerializerMethodField('get_completed_relations')
 
     class Meta:
         model = Course
-        fields = ['id', 'title', 'description', 'banner', 'content', 'rating', 'count_ratings', 'professor', 'learnings', 'students', 'lessons']
+        fields = ['id', 'title', 'description', 'banner', 'content', 'rating', 'count_ratings', 'professor', 'learnings', 'students', 'lessons', 'completed_course_relation']
         depth = 1
         
     def get_professor(self, obj):
@@ -25,6 +31,10 @@ class CourseSerializerForGETS(serializers.ModelSerializer):
     def get_students(self, obj): 
         students = User.objects.filter(courses=obj)
         return UserResumeSerializer(students, many=True).data
+    
+    def get_completed_relations(self, obj):
+        relations = ProgressCourseRelation.objects.filter(course=obj)
+        return ProgressCourseRelationSerializer(relations, many=True).data
 
 class CourseSerializerForPOSTS(serializers.ModelSerializer):
     professor = serializers.PrimaryKeyRelatedField(queryset=User.objects.all(), required=True)
