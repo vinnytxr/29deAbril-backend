@@ -1,6 +1,6 @@
 from django.shortcuts import get_object_or_404
 from rest_framework import serializers
-from .models import Lesson, Comment, User
+from .models import Lesson, Comment, User, CommentReply
 
 class LessonSerializer(serializers.ModelSerializer):
 
@@ -42,11 +42,12 @@ class LessonResumeSerializer(serializers.ModelSerializer):
         
 class CommentReplySerializer(serializers.ModelSerializer):
     user = serializers.SerializerMethodField()
-    
+
     class Meta:
-        model = Comment
-        fields = ['id', 'content', 'user', 'lesson']
-    
+        model = CommentReply
+        fields = ['id', 'content', 'user', 'lesson', 'comment']
+        read_only_fields = ['comment']
+
     def get_user(self, obj):
         user = obj.user
         serializer = UserSimpleSerializer(user)
@@ -56,11 +57,11 @@ class CommentReplySerializer(serializers.ModelSerializer):
 class CommentSerializer(serializers.ModelSerializer):
     replies = CommentReplySerializer(many=True, read_only=True)
     user = serializers.SerializerMethodField()
-    
+
     class Meta:
         model = Comment
         fields = ['id', 'content', 'user', 'lesson', 'replies']
-    
+
     def get_user(self, obj):
         user = obj.user
         serializer = UserSimpleSerializer(user)
@@ -70,4 +71,4 @@ class CommentSerializer(serializers.ModelSerializer):
 class UserSimpleSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
-        fields = ['name', 'photo']
+        fields = ['id', 'name', 'photo']
