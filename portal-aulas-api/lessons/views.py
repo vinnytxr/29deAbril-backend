@@ -104,13 +104,10 @@ class LessonViewSet(viewsets.ModelViewSet):
         
     def create(self, request, *args, **kwargs):
 
-        # print(request.data["category"])
-
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
 
         self.perform_create(serializer)
-        # Retrieve the saved object
         lesson = serializer.instance
 
         if "category" in request.data:
@@ -177,8 +174,6 @@ class LessonViewSet(viewsets.ModelViewSet):
 
         if 'useframe' in request.data:
             use_banner_from_frame_video = True if int(request.data['useframe']) == 1 else False
-
-        print('userframe: ', use_banner_from_frame_video)
 
         # Verifica se há uma nova imagem na requisição
         if 'banner' in request.FILES:

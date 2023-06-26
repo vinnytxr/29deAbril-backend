@@ -112,11 +112,6 @@ class CourseViewSet(viewsets.ModelViewSet):
                 status=status.HTTP_403_FORBIDDEN
             )
         
-        # if "categories_order" in request.data:
-        #     print(request.data['description'])
-
-        # request.data['categories_order'] = '[]'
-        
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
 
@@ -124,6 +119,9 @@ class CourseViewSet(viewsets.ModelViewSet):
 
         course_category = CourseCategory(course=course, name='Geral', lessons_order=[])
         course_category.save()
+
+        course.categories_order = json.dumps([course_category.id])
+        course.save()
 
         headers = self.get_success_headers(serializer.data) 
         return Response(serializer.data, status=status.HTTP_201_CREATED, headers=headers)
