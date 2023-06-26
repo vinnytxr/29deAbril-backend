@@ -24,7 +24,10 @@ class Course(models.Model):
     content = models.CharField(max_length=1024, null=False, blank=False)
     rating = models.FloatField(default=0.0, null=True)
     count_ratings = models.IntegerField(default=0, null=True)
-    categories_order = models.TextField()
+    categories_order = models.TextField(default='[]')
+
+    def get_categories_order(self):
+        return json.loads(self.categories_order)
 
     def __str__(self):
         return self.title 
@@ -66,7 +69,7 @@ class CourseCategory(models.Model):
     id = models.BigAutoField(primary_key=True)
     course = models.ForeignKey(Course, on_delete=models.CASCADE, related_name='categories')
     name = models.CharField(max_length=64, blank=False)
-    lessons_order = models.TextField()
+    lessons_order = models.TextField(default='[]')
 
     def get_lessons_order(self):
         return json.loads(self.lessons_order)

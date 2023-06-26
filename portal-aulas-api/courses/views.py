@@ -14,6 +14,7 @@ from django.db import models
 import requests
 from django.conf import settings
 from user import authentication, serializers
+import json
 
 class CourseViewSet(viewsets.ModelViewSet):
     queryset = Course.objects.all()
@@ -110,6 +111,11 @@ class CourseViewSet(viewsets.ModelViewSet):
                 {'professor': ['This user does not have permission to perform Professor\'s operations.']},
                 status=status.HTTP_403_FORBIDDEN
             )
+        
+        # if "categories_order" in request.data:
+        #     print(request.data['description'])
+
+        # request.data['categories_order'] = '[]'
         
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
@@ -335,6 +341,27 @@ class CategoriesViewSet(viewsets.ModelViewSet):
         else:
             return CourseCategorySerializerForGETS
         
+    def create(self, request, *args, **kwargs):
+        serializer = self.get_serializer(data=request.data)
+
+        if serializer.is_valid():
+            serializer.save()
+
+            course = CourseSerializerForGETS(serializer.instance.course, many=False)
+
+            categories_order = json.loads(course.instance.categories_order)
+            categories_order.append(serializer.instance.id)
+
+            course.instance.categories_order = json.dumps(categories_order)
+            course.instance.save()
+
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+        
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+        
+
+        
     @action(detail=False, methods=['get'], url_path='course/(?P<course_id>\d+)')
     def get_category_by_course(self, request, course_id=None):
         depth = request.GET.get('depth')
@@ -347,6 +374,28 @@ class CategoriesViewSet(viewsets.ModelViewSet):
             serializer = CourseCategoryDepthSerializerForGETS(queryset, many=True)
         else:
             serializer = self.get_serializer(queryset, many=True)
-        
 
-        return Response(serializer.data)
+        data = serializer.data
+
+        data = {'categories': serializer.data, 'order': json.loads(course.categories_order)}
+        
+        return Response(data)
+    
+    def destroy(self, request, *args, **kwargs):
+        instance = self.get_object()
+
+        serializer = self.get_serializer(instance, many=False)
+
+        if len(serializer.data['lessons']) > 0:
+            return Response({'error': 'categoria possui aulas vinculadas'}, status=status.HTTP_400_BAD_REQUEST)
+        
+        course = CourseSerializerForGETS(serializer.instance.course, many=False)
+
+        categories_order = json.loads(course.instance.categories_order)
+        categories_order.remove(serializer.instance.id)
+
+        course.instance.categories_order = json.dumps(categories_order)
+        course.instance.save()
+
+        self.perform_destroy(instance)
+        return Response(status=status.HTTP_204_NO_CONTENT)
