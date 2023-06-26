@@ -375,7 +375,6 @@ class AnotationViewSet(viewsets.ModelViewSet):
               "titulo": titulo_aula,
               "time": item["time"],
               "note": item["note"],
-              "link": item["link"]
           })
 
       output_list = list(sections.values())
