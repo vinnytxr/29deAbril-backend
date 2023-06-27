@@ -20,6 +20,7 @@ import re
 import mimetypes
 from .tools import generate_certificate
 import datetime
+import json
 
 from django.http import HttpResponse
 from reportlab.lib.pagesizes import letter
@@ -121,6 +122,11 @@ class LessonViewSet(viewsets.ModelViewSet):
                 lesson.category = categories[0]
                 lesson.save()
 
+        categories_order = json.loads(lesson.category.lessons_order)
+        categories_order.append(lesson.id)
+
+        lesson.category.lessons_order = json.dumps(categories_order)
+        lesson.category.save()
 
 
         if 'banner' not in request.data and lesson.video is not None:
