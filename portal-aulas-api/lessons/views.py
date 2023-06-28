@@ -2,7 +2,7 @@ from rest_framework import viewsets, status
 from rest_framework.response import Response
 from rest_framework.decorators import action
 from django.shortcuts import get_object_or_404
-from .models import Lesson, Comment
+from .models import Lesson, Comment, CommentReply
 from user.models import User
 from courses.models import ProgressCourseRelation, Course, CourseCategory
 from courses.serializers.course import ProgressCourseRelationSerializer
@@ -415,26 +415,10 @@ class CommentViewSet(viewsets.ModelViewSet):
         self.perform_create(serializer, user_id)
         headers = self.get_success_headers(serializer.data)
         return Response(serializer.data, status=status.HTTP_201_CREATED, headers=headers)
-
-    def create_reply(self, request, *args, **kwargs):
-        parent_comment = self.get_object()
-        lesson_id = kwargs['lesson_id']
-        user_id = request.user.id
-        data = request.data.copy()
-        data['lesson'] = lesson_id
-        data['user'] = user_id
-        serializer = CommentReplySerializer(data=data)
-        serializer.is_valid(raise_exception=True)
-        self.perform_create_reply(serializer, parent_comment, user_id)
-        headers = self.get_success_headers(serializer.data)
-        return Response(serializer.data, status=status.HTTP_201_CREATED, headers=headers)
-
+    
     def perform_create(self, serializer, user_id):
         serializer.save(user_id=user_id)
     
-    def perform_create_reply(self, serializer, parent_comment, user_id):
-        serializer.save(comment=parent_comment, user_id=user_id)
-
     def list(self, request, *args, **kwargs):
         lesson_id = kwargs['lesson_id']
         user_id = request.user.id
@@ -443,7 +427,6 @@ class CommentViewSet(viewsets.ModelViewSet):
         queryset = list(queryset) + list(other_comments)
         serializer = self.get_serializer(queryset, many=True)
         return Response(serializer.data)
-
 
     def update(self, request, *args, **kwargs):
         partial = kwargs.pop('partial', False)
@@ -464,8 +447,65 @@ class CommentViewSet(viewsets.ModelViewSet):
         self.perform_update(serializer)
 
         return Response(serializer.data)
-
+    
     def destroy(self, request, *args, **kwargs):
         instance = self.get_object()
         self.perform_destroy(instance)
         return Response(status=status.HTTP_204_NO_CONTENT)  
+    
+    
+class ReplyViewSet(viewsets.ModelViewSet):
+    authentication_classes = (authentication.CustomUserAuthentication,)
+    permission_classes = (permissions.CustomIsAuthenticated,)
+
+    queryset = CommentReply.objects.all()
+    serializer_class = CommentReplySerializer
+
+    def create(self, request, *args, **kwargs):
+        parent_comment = self.get_object()
+        lesson_id = kwargs['lesson_id']
+        user_id = request.user.id
+        data = request.data.copy()
+        data['lesson'] = lesson_id
+        data['user'] = user_id
+        serializer = self.get_serializer(data=data)
+        serializer.is_valid(raise_exception=True)
+        self.perform_create_reply(serializer, parent_comment, user_id)
+        headers = self.get_success_headers(serializer.data)
+        return Response(serializer.data, status=status.HTTP_201_CREATED, headers=headers)
+
+    def perform_create(self, serializer, parent_comment, user_id):
+        serializer.save(comment=parent_comment, user_id=user_id)
+
+    def update(self, request, *args, **kwargs):
+        partial = kwargs.pop('partial', False)
+        lesson_id = kwargs['lesson_id']
+        comment_id = kwargs['comment_id']
+        instance = self.get_object()
+        user_id = request.user.id
+        data = request.data.copy()
+        data['lesson'] = lesson_id
+        data['user'] = user_id
+        data['comment'] = comment_id
+        
+        # Verifique se o usuário é o proprietário do comentário
+        if instance.user != request.user:
+            return Response({'detail': 'Você não tem permissão para atualizar este comentário.'}, status=status.HTTP_403_FORBIDDEN)
+
+        # Atualize o comentário com os dados fornecidos
+        serializer = self.get_serializer(instance, data=data, partial=partial)
+        serializer.is_valid(raise_exception=True)
+        self.perform_update(serializer)
+
+        return Response(serializer.data)
+    
+    def destroy(self, request, *args, **kwargs):
+        instance = self.get_object()
+        comment_id = kwargs['comment_id']
+        
+        if instance.comment.id != comment_id:
+            return Response({'error': 'Reply does not belong to the specified comment.'}, status=400)
+        
+        self.perform_destroy(instance)
+        return Response(status=status.HTTP_204_NO_CONTENT)  
+    
