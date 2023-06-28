@@ -1,7 +1,9 @@
 from django.shortcuts import get_object_or_404
 from rest_framework import serializers
 from courses.serializers.category import CourseCategoryResumeSerializer
+from courses.models import CourseCategory
 from .models import Lesson, Comment, User, CommentReply
+import json
 
 class LessonSerializer(serializers.ModelSerializer):
     category = serializers.SerializerMethodField('get_category')
@@ -25,7 +27,21 @@ class LessonWithPrevNextSerializer(serializers.ModelSerializer):
         depth = 0
     
     def get_prev_lesson(self, obj):
-        prev_lesson = Lesson.objects.filter(course=obj.course, id__lt=obj.id).order_by('-id').first()
+
+        prev_lesson = None
+
+        lessons_order = json.loads(obj.category.lessons_order)
+        lessons_in_same_category = Lesson.objects.filter(category=obj.category)
+
+        lessons_arr = [i for i in lessons_in_same_category]
+        lessons_arr.sort(key=lambda x: lessons_order.index(x.id))
+        lessons_arr_ids = [i.id for i in lessons_arr]
+
+        if obj.id in lessons_arr_ids:
+            obj_idx_on_array = lessons_arr_ids.index(obj.id)
+            if obj_idx_on_array > 0:
+                prev_lesson = lessons_arr[obj_idx_on_array - 1]
+
         if prev_lesson:
             return LessonResumeSerializer(prev_lesson).data
         return None
@@ -34,7 +50,21 @@ class LessonWithPrevNextSerializer(serializers.ModelSerializer):
         return CourseCategoryResumeSerializer(obj.category).data
     
     def get_next_lesson(self, obj):
-        next_lesson = Lesson.objects.filter(course=obj.course, id__gt=obj.id).order_by('id').first()
+
+        next_lesson = None
+
+        lessons_order = json.loads(obj.category.lessons_order)
+        lessons_in_same_category = Lesson.objects.filter(category=obj.category)
+
+        lessons_arr = [i for i in lessons_in_same_category]
+        lessons_arr.sort(key=lambda x: lessons_order.index(x.id))
+        lessons_arr_ids = [i.id for i in lessons_arr]
+
+        if obj.id in lessons_arr_ids:
+            obj_idx_on_array = lessons_arr_ids.index(obj.id)
+            if len(lessons_arr_ids) > (obj_idx_on_array + 1):
+                next_lesson = lessons_arr[obj_idx_on_array+1]
+
         if next_lesson:
             return LessonResumeSerializer(next_lesson).data
         return None
