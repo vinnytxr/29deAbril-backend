@@ -13,5 +13,5 @@ urlpatterns = [
     path('lessons/<int:lesson_id>/comments/list', CommentViewSet.as_view({'get': 'list'}), name='list-comments'),
     path('lessons/<int:lesson_id>/comments/<int:pk>/', CommentViewSet.as_view({'put': 'update', 'delete': 'destroy'}), name='comment-detail'),
     path('lessons/<int:lesson_id>/comments/<int:comment_id>/reply/<int:pk>/', ReplyViewSet.as_view({'put': 'update', 'delete': 'destroy'}), name='reply-detail'),
-    path('lessons/<int:lesson_id>/comments/<int:pk>/reply', ReplyViewSet.as_view({'post': 'create'}), name='reply-comment'),
+    path('lessons/<int:lesson_id>/comments/<int:pk>/reply', CommentViewSet.as_view({'post': 'create_reply'}), name='reply-comments'),
 ]

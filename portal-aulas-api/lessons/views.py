@@ -416,8 +416,24 @@ class CommentViewSet(viewsets.ModelViewSet):
         headers = self.get_success_headers(serializer.data)
         return Response(serializer.data, status=status.HTTP_201_CREATED, headers=headers)
     
+    def create_reply(self, request, *args, **kwargs):
+        parent_comment = self.get_object()
+        lesson_id = kwargs['lesson_id']
+        user_id = request.user.id
+        data = request.data.copy()
+        data['lesson'] = lesson_id
+        data['user'] = user_id
+        serializer = CommentReplySerializer(data=data)
+        serializer.is_valid(raise_exception=True)
+        self.perform_create_reply(serializer, parent_comment, user_id)
+        headers = self.get_success_headers(serializer.data)
+        return Response(serializer.data, status=status.HTTP_201_CREATED, headers=headers)
+    
     def perform_create(self, serializer, user_id):
         serializer.save(user_id=user_id)
+        
+    def perform_create_reply(self, serializer, parent_comment, user_id):
+        serializer.save(comment=parent_comment, user_id=user_id)
     
     def list(self, request, *args, **kwargs):
         lesson_id = kwargs['lesson_id']
@@ -462,18 +478,20 @@ class ReplyViewSet(viewsets.ModelViewSet):
     serializer_class = CommentReplySerializer
 
     def create(self, request, *args, **kwargs):
-        parent_comment = self.get_object()
+        comment_id = kwargs['comment_id']
         lesson_id = kwargs['lesson_id']
         user_id = request.user.id
         data = request.data.copy()
         data['lesson'] = lesson_id
         data['user'] = user_id
+        comment = get_object_or_404(Comment, id=comment_id)
+        data['comment'] = comment
         serializer = self.get_serializer(data=data)
         serializer.is_valid(raise_exception=True)
-        self.perform_create_reply(serializer, parent_comment, user_id)
+        self.perform_create(serializer, comment_id, user_id)
         headers = self.get_success_headers(serializer.data)
         return Response(serializer.data, status=status.HTTP_201_CREATED, headers=headers)
-
+    
     def perform_create(self, serializer, parent_comment, user_id):
         serializer.save(comment=parent_comment, user_id=user_id)
 
