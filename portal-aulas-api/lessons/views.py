@@ -198,10 +198,22 @@ class LessonViewSet(viewsets.ModelViewSet):
 
         lesson = serializer.instance
 
+        lessons_order = json.loads(lesson.category.lessons_order)
+        lessons_order.remove(lesson.id)
+
+        lesson.category.lessons_order = json.dumps(lessons_order)
+        lesson.category.save()
+
         if "category" in request.data:
             category = get_object_or_404(CourseCategory, pk=request.data["category"])
             lesson.category = category
             lesson.save()
+
+            categories_order = json.loads(lesson.category.lessons_order)
+            categories_order.append(lesson.id)
+
+            lesson.category.lessons_order = json.dumps(categories_order)
+            lesson.category.save()
 
         # if 'banner' not in request.data and 'video' in request.data and lesson.video is not None:
         if use_banner_from_frame_video and lesson.video is not None:
@@ -370,6 +382,20 @@ class LessonViewSet(viewsets.ModelViewSet):
 
         # return response
         return JsonResponse(response_data)
+    
+    def destroy(self, request, *args, **kwargs):
+        instance = self.get_object()
+
+        lesson_serializer = self.get_serializer(instance, many=False)
+
+        lessons_order = json.loads(lesson_serializer.instance.category.lessons_order)
+        lessons_order.remove(lesson_serializer.instance.id)
+
+        lesson_serializer.instance.category.lessons_order = json.dumps(lessons_order)
+        lesson_serializer.instance.category.save()
+
+        self.perform_destroy(lesson_serializer.instance)
+        return Response(status=status.HTTP_204_NO_CONTENT)
         
 class CommentViewSet(viewsets.ModelViewSet):
     authentication_classes = (authentication.CustomUserAuthentication,)
