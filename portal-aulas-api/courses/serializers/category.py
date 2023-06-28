@@ -17,6 +17,7 @@ class CourseCategorySerializerForGETS(serializers.ModelSerializer):
     class Meta:
         model = CourseCategory
         fields = ['id', 'name', 'lessons_order', 'lessons']
+        depth=1
 
 class CourseCategorySerializerForPOSTS(serializers.ModelSerializer):
     lessons_order = serializers.ListField(child=serializers.IntegerField())
