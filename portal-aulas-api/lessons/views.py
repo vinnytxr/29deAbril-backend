@@ -198,13 +198,13 @@ class LessonViewSet(viewsets.ModelViewSet):
 
         lesson = serializer.instance
 
-        lessons_order = json.loads(lesson.category.lessons_order)
-        lessons_order.remove(lesson.id)
-
-        lesson.category.lessons_order = json.dumps(lessons_order)
-        lesson.category.save()
-
         if "category" in request.data:
+            lessons_order = json.loads(lesson.category.lessons_order)
+            lessons_order.remove(lesson.id)
+
+            lesson.category.lessons_order = json.dumps(lessons_order)
+            lesson.category.save()
+
             category = get_object_or_404(CourseCategory, pk=request.data["category"])
             lesson.category = category
             lesson.save()
