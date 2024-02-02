@@ -10,12 +10,12 @@ services:
     volumes:
       - ./portal-aulas-api:/app
     ports:
-      - "8080:8080"
+      - "8401:8080"
     env_file:
       - ./.env
     depends_on:
       - db
-    command: sh -c "pip install -r /app/requirements.txt && python /app/manage.py migrate && python /app/manage.py makemigrations && python /app/manage.py migrate && python /app/manage.py runserver 0.0.0.0:8080"
+    command: sh -c "python /app/manage.py migrate && python /app/manage.py makemigrations && python /app/manage.py migrate && python /app/manage.py runserver 0.0.0.0:8080"
 
   db:
     build:
@@ -31,7 +31,7 @@ services:
       - POSTGRES_PASSWORD=root
       - POSTGRES_DB=root
     ports:
-      - "5432:5432"
+      - "8400:5432"
 
 volumes:
   postgres-data:
