@@ -1,7 +1,6 @@
 from django.db import models
 from django.contrib.auth import models as auth_models
 from enum import Enum
-from localflavor.br.models import BRCPFField
 import os
 import uuid
 from django.core.validators import MinLengthValidator
@@ -71,7 +70,7 @@ class User(TimeStampedModel, auth_models.AbstractUser):
   name = models.CharField("nome", max_length=120)
   email = models.EmailField("email", max_length=120, unique=True)
   password = models.CharField(max_length=128, verbose_name='password', validators=[MinLengthValidator(4)])
-  cpf = BRCPFField("CPF", unique=True, null=True)
+  ra = models.CharField("ra", max_length=8, unique=True, validators=[MinLengthValidator(8)])
   photo = models.FileField("foto", upload_to=get_file_path, null=True)
   contactLink = models.URLField(max_length=200, null=True)
   about = models.TextField("sobre mim", blank=True, null=True)

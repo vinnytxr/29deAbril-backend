@@ -35,7 +35,7 @@ class UserSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = User
-        fields = ('id', 'name', 'email', 'password', 'photo', 'about', 'contactLink', 'birth', 'cpf', 'role', 'enrolled_courses', 'created_courses', 'favorite_courses', 'created', 'modified')
+        fields = ('id', 'name', 'email', 'password', 'photo', 'about', 'contactLink', 'birth', 'ra', 'role', 'enrolled_courses', 'created_courses', 'favorite_courses', 'created', 'modified')
         extra_kwargs = {'password': {'required': True}}
         
     def to_internal_value(self, data):
@@ -60,10 +60,10 @@ class UserSerializer(serializers.ModelSerializer):
                 real_field_name = "Senha"
             elif field.field_name == "email":
                 real_field_name = "E-mail"
+            elif field.field_name == "ra":
+                real_field_name = "RA"
             elif field.field_name == "birth":
                 real_field_name = "Data de nascimento"
-            elif field.field_name == "cpf":
-                real_field_name = "CPF"
             elif field.field_name == "role":
                 real_field_name = "Cargo"
 
