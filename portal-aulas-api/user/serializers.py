@@ -28,6 +28,13 @@ class UserSerializerForListProf(serializers.ModelSerializer):
         model = User
         fields = ('id', 'name', 'email', 'created')
 
+class UserSerializerForListUser(serializers.ModelSerializer):
+    class Meta:
+        model = User
+        fields = ('id', 'name', 'email', 'created', 'ra', 'role')
+        ordering = ('ra',)
+
+
 class UserSerializer(serializers.ModelSerializer):
     role = serializers.PrimaryKeyRelatedField(queryset=Role.objects.all(), many=True)
     created_courses = serializers.SerializerMethodField()
