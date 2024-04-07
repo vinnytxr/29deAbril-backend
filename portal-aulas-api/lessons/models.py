@@ -29,6 +29,7 @@ class Lesson(models.Model):
     video = models.FileField(upload_to=get_video_path, null=True, blank=True)
     appendix = models.FileField(upload_to=get_appendix_path, null=True, blank=True)
     extern_appendix_link = models.CharField(max_length=256, blank=True, default='')
+    extern_video_link = models.CharField(max_length=256, blank=True, default='')
     title_appendix = models.CharField(max_length=64, null=True, blank=False)
     course = models.ForeignKey(Course, on_delete=models.CASCADE, related_name='lessons', null=False, blank=False)
     users_who_completed = models.ManyToManyField(User, blank=True)
