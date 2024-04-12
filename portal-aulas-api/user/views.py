@@ -1,7 +1,7 @@
 from user.models import User, Role, Invitation, Anotation
 from courses.models import Course
 from lessons.models import Lesson
-from user.serializers import UserSerializer, RoleSerializer, InvitationSerializer, UserSerializerForListProf, AnotationSerializer
+from user.serializers import UserSerializer, RoleSerializer, InvitationSerializer, UserSerializerForListProf, AnotationSerializer, UserSerializerForListUser
 from courses.serializers.course import CourseResumeSerializer
 from lessons.serializers import LessonResumeSerializer
 from rest_framework import viewsets, views, exceptions, status
@@ -14,7 +14,7 @@ from . import services
 from rest_framework.settings import api_settings
 from django.core.validators import URLValidator
 import json
-
+from django.db.models import Max, Value, When, Case, IntegerField
 import requests
 from django.conf import settings
 from rest_framework.decorators import action, api_view, permission_classes
@@ -77,6 +77,29 @@ class UserViewSet(viewsets.ModelViewSet):
       instance.photo.delete(save=False) 
       self.perform_destroy(instance)
       return Response(status=status.HTTP_204_NO_CONTENT)
+  
+  @action(detail=False, methods=['get'], url_path='list-users', authentication_classes=[authentication.CustomUserAuthentication], permission_classes=[CustomIsAdmin])
+  def list_users(self, request):
+      order_by = request.query_params.get('order_by', None)
+
+      users = User.objects.annotate(max_role=Max('role')).filter(role__in=[1, 2, 3]).distinct()
+
+      if order_by == 'ra':
+          users = users.order_by('ra')
+      elif order_by == 'role':
+          users = users.order_by(
+              Case(
+                  When(max_role=1, then=Value(0)),
+                  When(max_role=2, then=Value(1)),
+                  When(max_role=3, then=Value(2)),
+                  default=Value(3),
+                  output_field=IntegerField(),
+              ),
+              'ra'
+          )
+
+      serializer = UserSerializerForListUser(users, many=True)
+      return Response(serializer.data, status=status.HTTP_200_OK)
   
   @action(detail=False, methods=['get'], url_path='list-professors', authentication_classes = [authentication.CustomUserAuthentication], permission_classes=[CustomIsAdmin])
   def list_professors(self, request):
